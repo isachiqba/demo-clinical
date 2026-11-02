@@ -1,0 +1,130 @@
+/*
+ * Design tokens. Nothing in the app hard-codes a colour, radius or step of the
+ * type scale — it all comes from here.
+ *
+ * Direction: warm white paper, deep navy structure, a teal-green that is only ever
+ * used for things you can act on, and soft sage for the sections that need to recede.
+ */
+:root {
+  /* Structure */
+  --navy-900: #0b1724;
+  --navy-800: #12243c;
+  --navy-700: #1b3451;
+  --navy-600: #2c4866;
+  --navy-500: #3d5c7c;
+  --navy-400: #4a627e;
+  --navy-200: #aec0d2;
+  --navy-100: #dde5ee;
+
+  /* Action */
+  --teal-800: #073f38;
+  --teal-700: #0a5a50;
+  --teal-600: #0e7366;
+  --teal-500: #15897a;
+  --teal-200: #b7d7d0;
+  --teal-100: #d9eae6;
+  --teal-50: #eef6f4;
+
+  /* Quiet sections */
+  --sage-700: #4d5e49;
+  --sage-600: #6b7f66;
+  --sage-200: #d3decd;
+  --sage-100: #e6ece2;
+  --sage-50: #f1f5ee;
+
+  /* Paper */
+  --paper: #fbf9f5;
+  --paper-deep: #f4f0e8;
+  --surface: #ffffff;
+  --line: #e8e2d7;
+  --line-strong: #d4cabb;
+
+  /* Feedback */
+  --positive-bg: #e4f0e6;
+  --positive-fg: #1f5c35;
+  --caution-bg: #faeedb;
+  --caution-fg: #7d5410;
+  --critical-bg: #fae9e6;
+  --critical-fg: #9b3326;
+
+  /* Semantic aliases */
+  --bg: var(--paper);
+  --text: var(--navy-800);
+  --text-soft: var(--navy-400);
+  --text-inverse: #ffffff;
+  --border: var(--line);
+  --border-strong: var(--line-strong);
+  --accent: var(--teal-600);
+  --accent-hover: var(--teal-700);
+  --accent-soft: var(--teal-50);
+  --focus: var(--teal-500);
+
+  /* Type */
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --text-2xs: 0.75rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9063rem;
+  --text-base: 1rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.1875rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 2.875rem;
+  --text-5xl: 3.75rem;
+
+  /* Space — a 4px base, used everywhere */
+  --s1: 0.25rem;
+  --s2: 0.5rem;
+  --s3: 0.75rem;
+  --s4: 1rem;
+  --s5: 1.25rem;
+  --s6: 1.5rem;
+  --s7: 2rem;
+  --s8: 2.5rem;
+  --s9: 3.5rem;
+  --s10: 5rem;
+  --s11: 7rem;
+
+  /* Shape */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+
+  /* Elevation — deliberately shallow */
+  --shadow-xs: 0 1px 2px rgba(18, 36, 60, 0.05);
+  --shadow-sm: 0 1px 3px rgba(18, 36, 60, 0.07), 0 1px 2px rgba(18, 36, 60, 0.04);
+  --shadow-md: 0 6px 18px rgba(18, 36, 60, 0.07), 0 2px 5px rgba(18, 36, 60, 0.04);
+  --shadow-lg: 0 20px 46px rgba(11, 23, 36, 0.12);
+
+  /* Layout */
+  --tap: 46px;
+  --page: 1180px;
+  --page-narrow: 860px;
+  --gutter: 1.5rem;
+  --header-h: 72px;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@media (max-width: 900px) {
+  :root {
+    --text-3xl: 1.9375rem;
+    --text-4xl: 2.25rem;
+    --text-5xl: 2.625rem;
+    --header-h: 64px;
+    --gutter: 1.25rem;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --gutter: 1rem;
+    --text-5xl: 2.25rem;
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "note": "One line per caption cue in cues.json, written to fit the gap before the next cue. Edit the text and re-run scripts/narrate.mjs; it reports any line that overruns its beat.",
+  "voice": "en_GB-alba-medium",
+  "lines": [
+    "Lorba Medical. Three clinics, one book.",
+    "A demonstration build of a primary care practice. Every patient and clinician here is invented.",
+    "Three neighbourhood clinics, run from a single appointment book.",
+    "A patient books in four short steps, starting with what the appointment is for.",
+    "Then where, and with whom. Choosing any location searches all three clinics at once, one book behind all of them.",
+    "The times offered are real availability, worked out from that same book. The patient picks one that suits them.",
+    "Details are filled in with sample data.",
+    "The booking is confirmed on the spot, with a reference, and labelled as simulated, because nothing is sent.",
+    "The front desk reads the same schedule. Not a copy, not a second system. The booking is already there.",
+    "Elsewhere in the day, a patient cancels.",
+    "The freed time goes straight to the waitlist.",
+    "Two of the three people waiting suit this time, each with its reason.",
+    "Reception offers it. The message is simulated.",
+    "The time is held, with a visible deadline.",
+    "The acceptance is simulated too, and the agenda updates the moment it lands.",
+    "The freed time is filled, and the cancellation stays on the board.",
+    "And one view covers all three clinics, worked out from the same records.",
+    "Occupancy, time held, and time still free.",
+    "Lorba Medical. Demonstration build."
+  ]
+}

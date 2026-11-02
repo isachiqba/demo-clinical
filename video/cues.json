@@ -1,0 +1,119 @@
+{
+  "length": 119.552,
+  "cues": [
+    {
+      "start": 1.569,
+      "end": 4.187,
+      "text": "Lorba Medical",
+      "note": "Three clinics, one appointment book"
+    },
+    {
+      "start": 5.091,
+      "end": 12.122,
+      "text": "A fictional primary care practice",
+      "note": "Every name, clinician and appointment in this demo is invented"
+    },
+    {
+      "start": 12.122,
+      "end": 18.152,
+      "text": "Care across three neighbourhood clinics",
+      "note": ""
+    },
+    {
+      "start": 19.906,
+      "end": 26.275,
+      "text": "Booking an appointment",
+      "note": "Four short steps"
+    },
+    {
+      "start": 26.275,
+      "end": 35.232,
+      "text": "One book across all three clinics",
+      "note": "Any location searches every clinic at once"
+    },
+    {
+      "start": 35.232,
+      "end": 44.769,
+      "text": "Real availability, drawn from the same book",
+      "note": ""
+    },
+    {
+      "start": 44.769,
+      "end": 47.073,
+      "text": "Patient details",
+      "note": "Sample details — nothing here is a real person"
+    },
+    {
+      "start": 49.262,
+      "end": 54.694,
+      "text": "Confirmed",
+      "note": "Booking reference LM-JAJV"
+    },
+    {
+      "start": 57.386,
+      "end": 63.729,
+      "text": "The same booking, at the front desk",
+      "note": "One shared schedule — not a second system"
+    },
+    {
+      "start": 66.608,
+      "end": 71.545,
+      "text": "Elsewhere in the day, a patient cancels",
+      "note": "The slot would normally go to waste"
+    },
+    {
+      "start": 71.545,
+      "end": 76.083,
+      "text": "The freed time is matched against the waitlist",
+      "note": ""
+    },
+    {
+      "start": 76.083,
+      "end": 82.142,
+      "text": "Only the patients the time actually suits",
+      "note": "Longest wait first, each with the reason it fits"
+    },
+    {
+      "start": 82.142,
+      "end": 87.607,
+      "text": "The offer message is simulated",
+      "note": "This demo never sends an email, a text or a notification"
+    },
+    {
+      "start": 87.607,
+      "end": 92.278,
+      "text": "The time is held while the patient decides",
+      "note": "Simulated hold, with a visible deadline"
+    },
+    {
+      "start": 92.278,
+      "end": 99.297,
+      "text": "Acceptance is simulated too",
+      "note": "The agenda updates the moment it lands"
+    },
+    {
+      "start": 99.297,
+      "end": 102.702,
+      "text": "The freed time is filled",
+      "note": "The cancellation stays on the board, marked cancelled"
+    },
+    {
+      "start": 104.997,
+      "end": 112.534,
+      "text": "One view over all three clinics",
+      "note": ""
+    },
+    {
+      "start": 112.534,
+      "end": 115.741,
+      "text": "Occupancy, held time and free time, per clinic",
+      "note": ""
+    },
+    {
+      "start": 116.546,
+      "end": 119.552,
+      "text": "Lorba Medical",
+      "note": "Demonstration build — invented data throughout"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+node_modules
+dist
+.DS_Store
+*.local
+test-results
+playwright-report
+shots*
+.vercel
+
+# Vercel's local link to the project
+.vercel
+
+# Rendered video: large, binary, and reproducible with scripts/film.mjs + scripts/narrate.mjs
+video/*.mp4
+video/*.webm

@@ -1,0 +1,11 @@
+node_modules
+dist
+video
+e2e
+tests
+test-results
+playwright-report
+playwright.config.ts
+vitest.config.ts
+scripts
+shots*
