@@ -2,7 +2,6 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { locationById } from '@/data/locations'
-import { providerById } from '@/data/providers'
 import { localized } from '@/i18n'
 import {
   addDaysToKey,
@@ -35,13 +34,10 @@ const earliest = ref<Slot | null>(null)
 
 const search = computed(() => ({
   serviceId: booking.draft.serviceId!,
-  locationId: booking.draft.locationId!,
-  providerId: booking.draft.providerId!
+  locationId: booking.draft.locationId!
 }))
 
-const ready = computed(() =>
-  Boolean(booking.draft.serviceId && booking.draft.locationId && booking.draft.providerId)
-)
+const ready = computed(() => Boolean(booking.draft.serviceId && booking.draft.locationId))
 
 const daysInMonth = (key: string): number => {
   const [year, month] = key.split('-').map(Number)
@@ -89,10 +85,7 @@ const reload = async (): Promise<void> => {
 
 onMounted(reload)
 
-watch(
-  () => [booking.draft.serviceId, booking.draft.locationId, booking.draft.providerId],
-  () => void reload()
-)
+watch(() => [booking.draft.serviceId, booking.draft.locationId], () => void reload())
 
 watch(monthKey, () => void loadMonth())
 watch(() => booking.draft.dateKey, () => void loadDay())
@@ -114,7 +107,6 @@ const goToNextOpening = (): void => {
   booking.selectDate(key)
 }
 
-const allowAnyProvider = (): void => booking.selectProvider('any')
 const allowAnyLocation = (): void => booking.selectLocation('any')
 
 /**
@@ -140,15 +132,8 @@ const joinedReference = ref<string | null>(null)
 
 const waitlistPreset = computed(() => ({
   serviceId: booking.draft.serviceId,
-  locationId: booking.draft.locationId,
-  providerId: booking.draft.providerId
+  locationId: booking.draft.locationId
 }))
-
-const providerName = computed(() =>
-  booking.draft.providerId === 'any'
-    ? t('booking.when.firstAvailableLabel')
-    : providerById(booking.draft.providerId ?? '')?.name ?? ''
-)
 
 const locationName = computed(() =>
   booking.draft.locationId === 'any'
@@ -156,11 +141,7 @@ const locationName = computed(() =>
     : localized(locationById(booking.draft.locationId ?? '')?.name)
 )
 
-const lede = computed(() =>
-  booking.draft.providerId === 'any'
-    ? t('booking.when.ledeAny', { location: locationName.value })
-    : t('booking.when.ledeProvider', { provider: providerName.value, location: locationName.value })
-)
+const lede = computed(() => t('booking.when.lede', { location: locationName.value }))
 
 const dayHeading = computed(() => {
   const offset = daysBetweenKeys(todayKey(), booking.draft.dateKey)
@@ -186,22 +167,18 @@ const nextOpeningLabel = computed(() => {
   return `${formatWallDate(slot.startWall, locale.value, { weekday: 'short', day: 'numeric', month: 'short' })}, ${formatWallTime(slot.startWall, locale.value)}`
 })
 
-const showWho = computed(
-  () => booking.draft.providerId === 'any' || booking.draft.locationId === 'any'
-)
+/** Only worth naming the clinic when the patient left the clinic open. */
+const showWho = computed(() => booking.draft.locationId === 'any')
 
 const chosenLine = computed(() => {
   const slot = booking.draft.slot
   if (!slot) return ''
   return t('booking.when.chosen', {
     time: formatWallTime(slot.startWall, locale.value),
-    provider: providerById(slot.providerId)?.name ?? '',
     location: localized(locationById(slot.locationId)?.name)
   })
 })
 
-/** Offered when today has nothing: tomorrow is often enough of a nudge. */
-const canRelaxProvider = computed(() => booking.draft.providerId !== 'any')
 const canRelaxLocation = computed(() => booking.draft.locationId !== 'any')
 const tomorrowKey = computed(() => addDaysToKey(todayKey(), 1))
 </script>
@@ -251,9 +228,6 @@ const tomorrowKey = computed(() => addDaysToKey(todayKey(), 1))
             <AppButton v-if="nextOpening" size="sm" icon-right="arrow-right" @click="goToNextOpening">
               {{ t('booking.when.empty.nextDay', { when: nextOpeningLabel }) }}
             </AppButton>
-            <AppButton v-if="canRelaxProvider" size="sm" variant="secondary" @click="allowAnyProvider">
-              {{ t('booking.when.empty.anyProvider') }}
-            </AppButton>
             <AppButton v-if="canRelaxLocation" size="sm" variant="secondary" @click="allowAnyLocation">
               {{ t('booking.when.empty.anyLocation') }}
             </AppButton>
@@ -301,6 +275,11 @@ const tomorrowKey = computed(() => addDaysToKey(todayKey(), 1))
 
         <p class="when__zone">
           {{ t('common.clinicTime', { zone: zoneAbbreviation(tomorrowKey) }) }}
+        </p>
+
+        <p class="when__subject">
+          <AppIcon name="info" :size="16" />
+          <span>{{ t('booking.when.subjectToConfirmation') }}</span>
         </p>
       </div>
     </div>
@@ -489,6 +468,19 @@ const tomorrowKey = computed(() => addDaysToKey(todayKey(), 1))
   margin-top: var(--s4);
   font-size: var(--text-2xs);
   color: var(--text-soft);
+}
+
+.when__subject {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s2);
+  margin-top: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--radius-sm);
+  background: var(--caution-bg);
+  color: var(--caution-fg);
+  font-size: var(--text-xs);
+  line-height: 1.5;
 }
 
 @media (max-width: 880px) {

@@ -219,3 +219,37 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Printing a care slip.
+
+   The slip is teleported to <body>, so while `printing-slip` is set the whole
+   application is hidden and the sheet is the only thing the printer sees. This
+   lives here rather than in the component because a scoped rule cannot hide its
+   own siblings.
+   --------------------------------------------------------------------------- */
+@media print {
+  body.printing-slip {
+    background: #fff;
+    margin: 0;
+  }
+
+  body.printing-slip > #app,
+  body.printing-slip .slip-overlay__chrome {
+    display: none !important;
+  }
+
+  body.printing-slip .slip-overlay {
+    position: static;
+    display: block;
+    padding: 0;
+    background: none;
+    overflow: visible;
+  }
+
+  /* A5 upright, which still prints sensibly centred on A4. */
+  @page {
+    size: A5 portrait;
+    margin: 10mm;
+  }
+}

@@ -25,7 +25,6 @@ const booking = useBookingStore()
           :icon="service.icon"
           :title="localized(service.name)"
           :description="localized(service.summary)"
-          :footnote="t('common.minutes', { count: service.durationMinutes })"
           :selected="booking.draft.serviceId === service.id"
           @select="booking.selectService(service.id)"
         />

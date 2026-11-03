@@ -9,7 +9,7 @@ import PageHeader from '@/components/layout/PageHeader.vue'
 
 const { t } = useI18n()
 
-const faqKeys = ['account', 'change', 'who', 'spanish', 'timezone'] as const
+const faqKeys = ['account', 'change', 'spanish', 'timezone'] as const
 const openKey = ref<string | null>('account')
 
 const toggle = (key: string): void => {

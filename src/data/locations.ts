@@ -32,6 +32,8 @@ export const locations: ClinicLocation[] = [
     },
     phone: '(555) 014-2200',
     image: '/images/clinic-downtown.webp',
+    // Provisional: the real figure per slot is not confirmed yet. See the README.
+    slotCapacity: 1,
     hours: hours(8 * 60, 19 * 60, [9 * 60, 13 * 60])
   },
   {
@@ -47,6 +49,8 @@ export const locations: ClinicLocation[] = [
     },
     phone: '(555) 014-2300',
     image: '/images/clinic-northside.webp',
+    // Provisional: the real figure per slot is not confirmed yet. See the README.
+    slotCapacity: 1,
     hours: hours(7 * 60 + 30, 18 * 60, [9 * 60, 13 * 60])
   },
   {
@@ -62,6 +66,8 @@ export const locations: ClinicLocation[] = [
     },
     phone: '(555) 014-2400',
     image: '/images/clinic-westside.webp',
+    // Provisional: the real figure per slot is not confirmed yet. See the README.
+    slotCapacity: 1,
     hours: hours(8 * 60, 17 * 60)
   }
 ]

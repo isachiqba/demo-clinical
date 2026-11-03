@@ -1,78 +1,100 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { locations } from '@/data/locations'
-import { providers } from '@/data/providers'
-import { services } from '@/data/services'
+import { blocksOnWeekday, doctor } from '@/data/doctor'
+import { locationById } from '@/data/locations'
 import { localized } from '@/i18n'
+import { formatClock } from '@/services/clinicTime'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 
-const clinicsOf = (ids: string[]): string =>
-  ids
-    .map((id) => locations.find((location) => location.id === id))
-    .filter((location): location is NonNullable<typeof location> => Boolean(location))
-    .map((location) => localized(location.name))
-    .join(' · ')
+/**
+ * The consulting week, read straight off the one agenda the booking flow uses. Days he
+ * does not consult are listed too, so the page is not quietly selective.
+ */
+const week = computed(() =>
+  [1, 2, 3, 4, 5, 6, 0].map((weekday) => ({
+    weekday,
+    label: t(`locations.days.${weekday}`),
+    sessions: blocksOnWeekday(weekday).map((block) => ({
+      key: `${block.locationId}-${block.startsAt}`,
+      clinic: localized(locationById(block.locationId)?.name),
+      hours: `${formatClock(block.startsAt, locale.value)}–${formatClock(block.endsAt, locale.value)}`
+    }))
+  }))
+)
 
-const servicesOf = (ids: string[]): string =>
-  ids
-    .map((id) => services.find((service) => service.id === id))
-    .filter((service): service is NonNullable<typeof service> => Boolean(service))
-    .map((service) => localized(service.name))
-    .join(' · ')
+const speaks = computed(() =>
+  doctor.languages.map((code) => t(`language.${code}`)).join(' · ')
+)
 </script>
 
 <template>
-  <PageHeader :title="t('team.title')" :lede="t('team.lede')" />
+  <PageHeader :title="t('team.title')" />
 
   <section class="band">
     <div class="page-width">
-      <ul class="people">
-        <li v-for="provider in providers" :key="provider.id" class="person">
-          <figure class="person__figure">
-            <img
-              :src="provider.image"
-              :alt="t('demo.illustrativeShort')"
-              width="640"
-              height="640"
-              loading="lazy"
-            />
-            <figcaption class="illustrative">{{ t('demo.illustrativeShort') }}</figcaption>
-          </figure>
+      <article class="person">
+        <figure class="person__figure">
+          <img
+            :src="doctor.image"
+            :alt="t('demo.illustrativeShort')"
+            width="640"
+            height="640"
+            loading="lazy"
+          />
+          <figcaption v-if="doctor.imageIsIllustrative" class="illustrative">
+            {{ t('demo.illustrativeShort') }}
+          </figcaption>
+        </figure>
 
-          <div class="person__body">
-            <h2 class="person__name">{{ provider.name }}</h2>
-            <p class="person__role">{{ localized(provider.role) }}</p>
-            <p class="person__about">{{ localized(provider.about) }}</p>
+        <div class="person__body">
+          <h2 class="person__name">{{ doctor.name }}</h2>
+          <p class="person__role">{{ localized(doctor.care) }}</p>
+          <p v-for="(paragraph, index) in doctor.bio" :key="index" class="person__about">
+            {{ localized(paragraph) }}
+          </p>
 
-            <dl class="person__meta">
-              <div>
-                <dt>{{ t('team.speaks') }}</dt>
-                <dd>{{ provider.languages.map((code) => t(`language.${code}`)).join(' · ') }}</dd>
-              </div>
-              <div>
-                <dt>{{ t('team.worksAt') }}</dt>
-                <dd>{{ clinicsOf(provider.locationIds) }}</dd>
-              </div>
-              <div>
-                <dt>{{ t('team.offers') }}</dt>
-                <dd>{{ servicesOf(provider.serviceIds) }}</dd>
-              </div>
-            </dl>
+          <dl class="person__meta">
+            <div>
+              <dt>{{ t('team.speaks') }}</dt>
+              <dd>{{ speaks }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('team.whereLabel') }}</dt>
+              <dd>{{ t('team.whereValue') }}</dd>
+            </div>
+          </dl>
 
-            <AppButton
-              variant="secondary"
-              :to="{ name: 'book', query: { provider: provider.id } }"
-              icon-right="arrow-right"
-            >
-              {{ t('team.book', { name: provider.name }) }}
-            </AppButton>
-          </div>
-        </li>
-      </ul>
+          <p class="person__invite">{{ localized(doctor.invitation) }}</p>
+          <AppButton :to="{ name: 'book' }" icon-right="arrow-right">
+            {{ t('nav.book') }}
+          </AppButton>
+        </div>
+      </article>
+
+      <section class="hours" :aria-label="t('team.hours.title')">
+        <h2 class="hours__title">{{ t('team.hours.title') }}</h2>
+        <p class="hours__lede">{{ t('team.hours.lede') }}</p>
+
+        <ul class="hours__week">
+          <li v-for="day in week" :key="day.weekday" class="day">
+            <span class="day__name">{{ day.label }}</span>
+            <span v-if="!day.sessions.length" class="day__off">{{ t('team.hours.off') }}</span>
+            <ul v-else class="day__sessions">
+              <li v-for="session in day.sessions" :key="session.key" class="session">
+                <span class="session__hours">{{ session.hours }}</span>
+                <span class="session__clinic">{{ session.clinic }}</span>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <p class="hours__note">{{ t('team.hours.note') }}</p>
+      </section>
 
       <p class="note">
         <AppIcon name="info" :size="18" />
@@ -157,6 +179,21 @@ const servicesOf = (ids: string[]): string =>
   color: var(--navy-600);
 }
 
+.person__note {
+  margin-top: var(--s2);
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
+.person__invite {
+  max-width: 62ch;
+  margin: var(--s6) 0 var(--s4);
+  font-size: var(--text-md);
+  font-weight: 500;
+  line-height: 1.55;
+  color: var(--navy-800);
+}
+
 .note {
   display: flex;
   align-items: flex-start;
@@ -174,6 +211,98 @@ const servicesOf = (ids: string[]): string =>
 .note svg {
   margin-top: 3px;
   color: var(--navy-400);
+}
+
+
+.hours {
+  max-width: 820px;
+  margin-top: var(--s7);
+  padding: var(--s6);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.hours__title {
+  font-size: var(--text-xl);
+}
+
+.hours__lede {
+  margin-top: var(--s2);
+  max-width: 62ch;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--navy-600);
+}
+
+.hours__week {
+  margin: var(--s5) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+
+.day {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: var(--s4);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.day__name {
+  font-weight: 600;
+  color: var(--navy-800);
+}
+
+.day__off {
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
+.day__sessions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.session__hours {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--navy-700);
+}
+
+.session__clinic {
+  font-size: var(--text-sm);
+  color: var(--navy-600);
+}
+
+.hours__note {
+  margin-top: var(--s5);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+  color: var(--text-soft);
+}
+
+@media (max-width: 600px) {
+  .hours {
+    padding: var(--s5);
+  }
+
+  .day {
+    grid-template-columns: 1fr;
+    gap: var(--s2);
+  }
 }
 
 @media (max-width: 760px) {

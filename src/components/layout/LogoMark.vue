@@ -1,8 +1,9 @@
 <script setup lang="ts">
 /**
- * The wordmark. The symbol is an open ring with a single centred dot: the ring is the
- * "o" of lorba redrawn, left open to read as attention rather than enclosure, and the
- * dot is the one patient it is turned towards. No cross, no caduceus, no heart.
+ * The wordmark: one doctor's name, set as a name rather than as a brand. The symbol is an
+ * open ring with a single centred dot — the ring left open to read as attention rather
+ * than enclosure, and the dot the one patient it is turned towards. No cross, no
+ * caduceus, no heart, and no practice name, because there is no practice to name.
  */
 withDefaults(defineProps<{ tone?: 'ink' | 'light'; compact?: boolean }>(), {
   tone: 'ink',
@@ -23,8 +24,7 @@ withDefaults(defineProps<{ tone?: 'ink' | 'light'; compact?: boolean }>(), {
       <circle cx="16" cy="16" r="3.9" fill="currentColor" />
     </svg>
     <span class="logo__words">
-      <span class="logo__name">lorba</span>
-      <span class="logo__suffix">medical</span>
+      <span class="logo__prefix">Dr.&nbsp;</span><span class="logo__name">Lorba</span>
     </span>
   </span>
 </template>
@@ -46,9 +46,8 @@ withDefaults(defineProps<{ tone?: 'ink' | 'light'; compact?: boolean }>(), {
 }
 
 .logo__words {
-  display: flex;
-  align-items: baseline;
-  gap: 0.42em;
+  display: block;
+  white-space: nowrap;
   font-family: var(--font-display);
   font-size: var(--text-xl);
   letter-spacing: -0.015em;
@@ -58,17 +57,17 @@ withDefaults(defineProps<{ tone?: 'ink' | 'light'; compact?: boolean }>(), {
   font-weight: 600;
 }
 
-.logo__suffix {
+.logo__prefix {
   font-weight: 400;
-  font-size: 0.78em;
-  letter-spacing: 0.06em;
+  font-size: 0.72em;
+  letter-spacing: 0.01em;
 }
 
 .logo--ink .logo__name {
   color: var(--navy-800);
 }
 
-.logo--ink .logo__suffix {
+.logo--ink .logo__prefix {
   color: var(--navy-400);
 }
 
@@ -80,7 +79,7 @@ withDefaults(defineProps<{ tone?: 'ink' | 'light'; compact?: boolean }>(), {
   color: #fff;
 }
 
-.logo--light .logo__suffix {
+.logo--light .logo__prefix {
   color: var(--navy-200);
 }
 

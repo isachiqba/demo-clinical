@@ -3,16 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { locationById } from '@/data/locations'
-import { providerById } from '@/data/providers'
 import { serviceById } from '@/data/services'
 import { localized } from '@/i18n'
-import { downloadIcs } from '@/services/calendarFile'
-import {
-  addMinutesToWall,
-  formatWallDate,
-  formatWallTime,
-  zoneAbbreviation
-} from '@/services/clinicTime'
+import { canExportIcs, downloadIcs } from '@/services/calendarFile'
+import { formatWallDate, formatWallTime, zoneAbbreviation } from '@/services/clinicTime'
 import { useScheduleStore } from '@/stores/schedule'
 import type { Locale } from '@/types'
 import AppBadge from '@/components/ui/AppBadge.vue'
@@ -21,6 +15,12 @@ import AppDialog from '@/components/ui/AppDialog.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import WaitlistDialog from '@/components/waitlist/WaitlistDialog.vue'
 
+/**
+ * What the patient sees after asking for a time.
+ *
+ * It is careful never to call a request an appointment: the clinic has to check its own
+ * diary in CureMD first. Nothing is sent to the patient either, and the page says so.
+ */
 const { t, locale } = useI18n()
 const route = useRoute()
 const schedule = useScheduleStore()
@@ -31,7 +31,51 @@ const askLeave = ref(false)
 
 onMounted(() => void schedule.ensureLoaded())
 
-/** The patient's own waitlist entry for this booking, if they asked to be told. */
+const appointment = computed(() => schedule.byReference(String(route.params.reference)))
+const service = computed(() => serviceById(appointment.value?.serviceId ?? ''))
+const location = computed(() => locationById(appointment.value?.locationId ?? ''))
+
+const status = computed(() => appointment.value?.status ?? 'requested')
+const isRequest = computed(() => status.value === 'requested')
+const isConfirmed = computed(
+  () => status.value === 'confirmed' || status.value === 'arrived' || status.value === 'completed'
+)
+const isClosed = computed(() => status.value === 'cancelled' || status.value === 'unavailable')
+
+/** A move the clinic has agreed but not yet put into CureMD is not the patient's time yet. */
+const changePending = computed(() => Boolean(appointment.value?.pendingChange))
+const cancellationPending = computed(
+  () => appointment.value?.curemd.status === 'cancellation-pending'
+)
+
+const whenLong = computed(() => {
+  const current = appointment.value
+  if (!current) return ''
+  return `${formatWallDate(current.startWall, locale.value)}, ${formatWallTime(current.startWall, locale.value)} (${zoneAbbreviation(current.startWall)})`
+})
+
+const headline = computed(() => {
+  if (isClosed.value) return t(`confirmation.headline.${status.value}`)
+  if (cancellationPending.value) return t('confirmation.headline.cancellationPending')
+  if (changePending.value) return t('confirmation.headline.changePending')
+  if (isConfirmed.value) return t('confirmation.headline.confirmed')
+  return t('confirmation.headline.requested')
+})
+
+const body = computed(() => {
+  if (isClosed.value) return t(`confirmation.body.${status.value}`)
+  if (cancellationPending.value) return t('confirmation.body.cancellationPending')
+  if (changePending.value) return t('confirmation.body.changePending')
+  if (isConfirmed.value) return t('confirmation.body.confirmed')
+  return t('confirmation.body.requested')
+})
+
+const tone = computed(() => {
+  if (isClosed.value) return 'neutral'
+  if (isConfirmed.value && !changePending.value && !cancellationPending.value) return 'positive'
+  return 'caution'
+})
+
 const waitlistEntry = computed(() =>
   schedule.waitlist.find(
     (entry) =>
@@ -44,10 +88,8 @@ const waitlistEntry = computed(() =>
 const waitlistPreset = computed(() => ({
   serviceId: appointment.value?.serviceId ?? null,
   locationId: appointment.value?.locationId ?? null,
-  providerId: appointment.value?.providerId ?? null,
   patient: appointment.value?.patient,
   linkedAppointmentId: appointment.value?.id ?? null,
-  // Only something before the appointment they already hold is of any use.
   untilKey: appointment.value ? appointment.value.startWall.slice(0, 10) : undefined
 }))
 
@@ -57,24 +99,12 @@ const leaveWaitlist = async (): Promise<void> => {
   askLeave.value = false
 }
 
-const appointment = computed(() => schedule.byReference(String(route.params.reference)))
-const service = computed(() => serviceById(appointment.value?.serviceId ?? ''))
-const provider = computed(() => providerById(appointment.value?.providerId ?? ''))
-const location = computed(() => locationById(appointment.value?.locationId ?? ''))
-
-const whenLong = computed(() => {
-  const current = appointment.value
-  if (!current) return ''
-  const end = addMinutesToWall(current.startWall, current.durationMinutes)
-  return `${formatWallDate(current.startWall, locale.value)}, ${formatWallTime(current.startWall, locale.value)}–${formatWallTime(end, locale.value)} (${zoneAbbreviation(current.startWall)})`
-})
-
-const cancelled = computed(() => appointment.value?.status === 'cancelled')
-
 const confirmCancel = async (): Promise<void> => {
-  if (appointment.value) await schedule.cancel(appointment.value.id)
+  if (appointment.value) await schedule.requestCancellation(appointment.value.id)
   askCancel.value = false
 }
+
+const canDownload = computed(() => (appointment.value ? canExportIcs(appointment.value) : false))
 
 const saveIcs = (): void => {
   if (appointment.value) downloadIcs(appointment.value, locale.value as Locale)
@@ -85,37 +115,28 @@ const saveIcs = (): void => {
   <div class="wrap">
     <div class="page-width page-width--narrow">
       <template v-if="appointment">
-        <AppBadge tone="caution">{{ t('confirmation.simulated') }}</AppBadge>
+        <AppBadge :tone="tone">{{ t(`confirmation.state.${status}`) }}</AppBadge>
 
-        <h1 class="title">{{ t('confirmation.title') }}</h1>
-        <p class="body">{{ t('confirmation.body') }}</p>
+        <h1 class="title">{{ headline }}</h1>
+        <p class="body">{{ body }}</p>
+        <p class="body body--quiet">{{ t('confirmation.nothingSent') }}</p>
 
-        <article class="ticket" :class="{ 'ticket--off': cancelled }">
+        <article class="ticket" :class="{ 'ticket--off': isClosed }">
           <header class="ticket__head">
             <div>
               <p class="ticket__label">{{ t('confirmation.reference') }}</p>
               <p class="ticket__ref">{{ appointment.reference }}</p>
             </div>
-            <AppBadge :tone="cancelled ? 'critical' : 'positive'">
-              {{ t(`reception.status.${appointment.status}`) }}
-            </AppBadge>
           </header>
 
           <dl class="ticket__rows">
             <div>
               <dt>{{ t('confirmation.appointment') }}</dt>
-              <dd>
-                {{ localized(service?.name) }}
-                <span class="muted">· {{ t('common.minutes', { count: appointment.durationMinutes }) }}</span>
-              </dd>
+              <dd>{{ localized(service?.name) }}</dd>
             </div>
             <div>
-              <dt>{{ t('confirmation.when') }}</dt>
+              <dt>{{ isRequest ? t('confirmation.requestedTime') : t('confirmation.when') }}</dt>
               <dd>{{ whenLong }}</dd>
-            </div>
-            <div>
-              <dt>{{ t('confirmation.clinician') }}</dt>
-              <dd>{{ provider?.name }}</dd>
             </div>
             <div>
               <dt>{{ t('confirmation.clinic') }}</dt>
@@ -126,38 +147,43 @@ const saveIcs = (): void => {
             </div>
             <div>
               <dt>{{ t('confirmation.patient') }}</dt>
-              <dd>
-                {{ appointment.patient.firstName }} {{ appointment.patient.lastName }}
-                <span class="muted">· {{ t(`reception.patientType.${appointment.patientType}`) }}</span>
-              </dd>
-            </div>
-            <div>
-              <dt>{{ t('confirmation.payment') }}</dt>
-              <dd>{{ t(`reception.coverage.${appointment.patient.coverage || 'self-pay'}`) }}</dd>
+              <dd>{{ appointment.patient.firstName }} {{ appointment.patient.lastName }}</dd>
             </div>
           </dl>
+
+          <p v-if="changePending && appointment.pendingChange" class="ticket__change">
+            <AppIcon name="calendar-clock" :size="17" />
+            <span>
+              {{
+                t('confirmation.changeProposed', {
+                  when: `${formatWallDate(appointment.pendingChange.startWall, locale)}, ${formatWallTime(appointment.pendingChange.startWall, locale)}`
+                })
+              }}
+            </span>
+          </p>
         </article>
 
-        <p v-if="cancelled" class="cancelled" role="status">
-          <AppIcon name="info" :size="18" />
-          <span>{{ t('confirmation.cancelled') }}</span>
-        </p>
-
         <div class="actions">
-          <AppButton v-if="!cancelled" icon-left="download" @click="saveIcs">
+          <AppButton v-if="canDownload" icon-left="download" @click="saveIcs">
             {{ t('confirmation.addToCalendar') }}
           </AppButton>
-          <AppButton v-if="!cancelled" variant="critical" icon-left="ban" @click="askCancel = true">
-            {{ t('confirmation.manage') }}
+          <AppButton
+            v-if="!isClosed && !cancellationPending"
+            variant="critical"
+            icon-left="ban"
+            @click="askCancel = true"
+          >
+            {{ isRequest ? t('confirmation.cancelRequest') : t('confirmation.cancelAppointment') }}
           </AppButton>
           <AppButton variant="secondary" :to="{ name: 'book' }">
             {{ t('confirmation.bookAnother') }}
           </AppButton>
         </div>
 
-        <p v-if="!cancelled" class="fineprint ics-note">{{ t('confirmation.calendarNote') }}</p>
+        <p v-if="canDownload" class="fineprint ics-note">{{ t('confirmation.calendarNote') }}</p>
+        <p v-else-if="!isClosed" class="fineprint ics-note">{{ t('confirmation.calendarLater') }}</p>
 
-        <section v-if="!cancelled" class="sooner">
+        <section v-if="!isClosed" class="sooner">
           <template v-if="waitlistEntry">
             <h2 class="sooner__title">
               <AppIcon name="check-circle" :size="19" />
@@ -183,7 +209,7 @@ const saveIcs = (): void => {
         <div class="reception-link">
           <AppButton
             variant="secondary"
-            icon-left="calendar-clock"
+            icon-left="log-in"
             :to="{ name: 'reception', query: { ref: appointment.reference } }"
           >
             {{ t('confirmation.openReception') }}
@@ -227,12 +253,17 @@ const saveIcs = (): void => {
 
     <AppDialog
       :open="askCancel"
-      :title="t('confirmation.cancelTitle')"
+      :title="isRequest ? t('confirmation.cancelRequestTitle') : t('confirmation.cancelTitle')"
       :close-label="t('common.close')"
       @close="askCancel = false"
     >
       <p v-if="appointment">
-        {{ t('confirmation.cancelBody', { service: localized(service?.name), when: whenLong }) }}
+        {{
+          t(isRequest ? 'confirmation.cancelRequestBody' : 'confirmation.cancelBody', {
+            service: localized(service?.name),
+            when: whenLong
+          })
+        }}
       </p>
       <template #actions>
         <AppButton variant="critical" :loading="schedule.working" @click="confirmCancel">
@@ -262,6 +293,12 @@ const saveIcs = (): void => {
   line-height: 1.65;
 }
 
+.body--quiet {
+  margin-top: var(--s2);
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
 .ticket {
   margin-top: var(--s7);
   background: var(--surface);
@@ -275,10 +312,6 @@ const saveIcs = (): void => {
 }
 
 .ticket__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--s4);
   padding: var(--s5) var(--s6);
   background: var(--navy-800);
   color: #fff;
@@ -322,22 +355,21 @@ const saveIcs = (): void => {
   line-height: 1.45;
 }
 
-.muted {
-  color: var(--navy-400);
-  font-weight: 400;
-}
-
-.cancelled {
+.ticket__change {
   display: flex;
   align-items: flex-start;
   gap: var(--s3);
-  margin-top: var(--s5);
-  padding: var(--s4);
-  border-radius: var(--radius-sm);
+  padding: var(--s4) var(--s6);
+  border-top: 1px solid var(--border);
   background: var(--caution-bg);
   color: var(--caution-fg);
   font-size: var(--text-sm);
   font-weight: 500;
+}
+
+.muted {
+  color: var(--navy-400);
+  font-weight: 400;
 }
 
 .actions {
@@ -386,10 +418,6 @@ const saveIcs = (): void => {
     grid-template-columns: 1fr;
     gap: var(--s4);
     padding: var(--s5);
-  }
-
-  .ticket__head {
-    padding: var(--s4) var(--s5);
   }
 
   .actions > * {

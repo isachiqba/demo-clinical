@@ -55,7 +55,7 @@ router.beforeEach((to) => {
     return { name: 'book', params: { step: 'visit' }, query: to.query, replace: true }
   }
 
-  const carriesPreset = Boolean(to.query.service || to.query.location || to.query.provider)
+  const carriesPreset = Boolean(to.query.service || to.query.location)
   if (!booking.canEnter(step) && !carriesPreset) {
     return { name: 'book', params: { step: booking.furthestStep }, query: to.query, replace: true }
   }

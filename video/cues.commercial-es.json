@@ -1,0 +1,119 @@
+{
+  "length": 118.574,
+  "cues": [
+    {
+      "start": 1.559,
+      "end": 4.183,
+      "text": "Lorba Medical",
+      "note": "Tres clínicas, una sola agenda"
+    },
+    {
+      "start": 5.086,
+      "end": 12.112,
+      "text": "Atención primaria, cerca de casa",
+      "note": "Tres clínicas de barrio, gestionadas como una"
+    },
+    {
+      "start": 12.112,
+      "end": 18.131,
+      "text": "Atención en tres clínicas de barrio",
+      "note": ""
+    },
+    {
+      "start": 19.846,
+      "end": 26.243,
+      "text": "Pedir cita",
+      "note": "Cuatro pasos breves"
+    },
+    {
+      "start": 26.243,
+      "end": 35.195,
+      "text": "Una sola agenda para las tres clínicas",
+      "note": "«Cualquier sede» busca en todas a la vez"
+    },
+    {
+      "start": 35.195,
+      "end": 44.816,
+      "text": "Disponibilidad real, de esa misma agenda",
+      "note": ""
+    },
+    {
+      "start": 44.816,
+      "end": 47.111,
+      "text": "Datos del paciente",
+      "note": "Lo imprescindible: ni síntomas ni documentos"
+    },
+    {
+      "start": 49.309,
+      "end": 53.822,
+      "text": "Confirmada al momento",
+      "note": "Referencia LM-ERYL"
+    },
+    {
+      "start": 56.509,
+      "end": 62.867,
+      "text": "La misma cita, en recepción",
+      "note": "Una agenda compartida, no un segundo sistema"
+    },
+    {
+      "start": 65.756,
+      "end": 70.739,
+      "text": "En otro punto del día, un paciente anula",
+      "note": "Ese hueco se perdería"
+    },
+    {
+      "start": 70.739,
+      "end": 75.264,
+      "text": "El hueco libre pasa directo a la lista de espera",
+      "note": ""
+    },
+    {
+      "start": 75.264,
+      "end": 81.278,
+      "text": "Solo los pacientes a quienes les encaja",
+      "note": "Primero quien más ha esperado, con el motivo"
+    },
+    {
+      "start": 81.278,
+      "end": 86.737,
+      "text": "Recepción ofrece el horario",
+      "note": "Con el mensaje ya escrito, en su idioma"
+    },
+    {
+      "start": 86.737,
+      "end": 91.389,
+      "text": "El horario queda reservado mientras decide",
+      "note": "Con un plazo visible para todos"
+    },
+    {
+      "start": 91.389,
+      "end": 98.351,
+      "text": "El paciente acepta",
+      "note": "La agenda se actualiza al instante"
+    },
+    {
+      "start": 98.351,
+      "end": 101.757,
+      "text": "El hueco queda cubierto",
+      "note": "La anulación sigue visible en el tablero"
+    },
+    {
+      "start": 104.015,
+      "end": 111.541,
+      "text": "Una vista de las tres clínicas",
+      "note": ""
+    },
+    {
+      "start": 111.541,
+      "end": 114.758,
+      "text": "Ocupación, tiempo reservado y tiempo libre, por clínica",
+      "note": ""
+    },
+    {
+      "start": 115.564,
+      "end": 118.574,
+      "text": "Lorba Medical",
+      "note": "Demostración de producto con datos de ejemplo"
+    }
+  ]
+}

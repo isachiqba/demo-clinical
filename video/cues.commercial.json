@@ -1,0 +1,119 @@
+{
+  "length": 119.837,
+  "cues": [
+    {
+      "start": 1.687,
+      "end": 4.307,
+      "text": "Lorba Medical",
+      "note": "Three clinics, one appointment book"
+    },
+    {
+      "start": 5.216,
+      "end": 12.265,
+      "text": "Primary care, close to home",
+      "note": "Three neighbourhood clinics, run as one practice"
+    },
+    {
+      "start": 12.265,
+      "end": 18.312,
+      "text": "Care across three neighbourhood clinics",
+      "note": ""
+    },
+    {
+      "start": 20.095,
+      "end": 26.457,
+      "text": "Booking an appointment",
+      "note": "Four short steps"
+    },
+    {
+      "start": 26.457,
+      "end": 35.471,
+      "text": "One book across all three clinics",
+      "note": "Any location searches every clinic at once"
+    },
+    {
+      "start": 35.471,
+      "end": 45.127,
+      "text": "Live availability, drawn from the same book",
+      "note": ""
+    },
+    {
+      "start": 45.127,
+      "end": 47.405,
+      "text": "Patient details",
+      "note": "Just the essentials — no symptoms, no documents"
+    },
+    {
+      "start": 49.58,
+      "end": 55.009,
+      "text": "Confirmed on the spot",
+      "note": "Booking reference LM-RMDK"
+    },
+    {
+      "start": 57.713,
+      "end": 64.077,
+      "text": "The same booking, at the front desk",
+      "note": "One shared schedule — not a second system"
+    },
+    {
+      "start": 66.97,
+      "end": 71.916,
+      "text": "Elsewhere in the day, a patient cancels",
+      "note": "The slot would normally go to waste"
+    },
+    {
+      "start": 71.916,
+      "end": 76.478,
+      "text": "The freed time goes straight to the waitlist",
+      "note": ""
+    },
+    {
+      "start": 76.478,
+      "end": 82.61,
+      "text": "Only the patients the time actually suits",
+      "note": "Longest wait first, each with the reason it fits"
+    },
+    {
+      "start": 82.61,
+      "end": 88.053,
+      "text": "Reception offers the time",
+      "note": "With the message already written, in their language"
+    },
+    {
+      "start": 88.053,
+      "end": 92.703,
+      "text": "The time is held while the patient decides",
+      "note": "With a deadline everyone can see"
+    },
+    {
+      "start": 92.703,
+      "end": 99.595,
+      "text": "The patient accepts",
+      "note": "The agenda updates the moment it lands"
+    },
+    {
+      "start": 99.595,
+      "end": 103.003,
+      "text": "The freed time is filled",
+      "note": "The cancellation stays on the board"
+    },
+    {
+      "start": 105.273,
+      "end": 112.8,
+      "text": "One view over all three clinics",
+      "note": ""
+    },
+    {
+      "start": 112.8,
+      "end": 116.02,
+      "text": "Occupancy, held time and free time, per clinic",
+      "note": ""
+    },
+    {
+      "start": 116.825,
+      "end": 119.837,
+      "text": "Lorba Medical",
+      "note": "A product demonstration, shown with sample data"
+    }
+  ]
+}

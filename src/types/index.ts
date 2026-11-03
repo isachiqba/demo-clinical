@@ -5,21 +5,22 @@ export type Locale = 'en' | 'es'
 /** A string that exists in both supported languages. */
 export type Localized = Record<Locale, string>
 
-export type ServiceId =
-  | 'primary-care'
-  | 'annual-wellness'
-  | 'follow-up'
-  | 'non-emergency'
+export type ServiceId = 'primary-care' | 'annual-wellness' | 'follow-up' | 'non-emergency'
 
 export type LocationId = 'downtown' | 'northside' | 'westside'
 
-/** `any` is the patient saying "wherever / whoever is soonest". */
+/** `any` is the patient saying "wherever is soonest". */
 export type LocationChoice = LocationId | 'any'
-export type ProviderChoice = string | 'any'
 
 export type PatientType = 'new' | 'existing'
 
 export type Coverage = 'insurance' | 'self-pay'
+
+/**
+ * Appointments are offered on a ten-minute grid. This is the booking interval only. It is
+ * not a promise that an appointment lasts ten minutes, and the interface never says so.
+ */
+export const SLOT_MINUTES = 10
 
 export interface Service {
   id: ServiceId
@@ -27,9 +28,12 @@ export interface Service {
   name: Localized
   summary: Localized
   detail: Localized
-  durationMinutes: number
 }
 
+/**
+ * When the clinic's doors are open. This is **not** when the doctor is there: his
+ * consulting blocks live in `src/data/doctor.ts` and are always a subset of these.
+ */
 export interface OpeningHours {
   /** 0 = Sunday … 6 = Saturday. `null` on both ends means closed that day. */
   weekday: number
@@ -46,32 +50,57 @@ export interface ClinicLocation {
   phone: string
   image: string
   hours: OpeningHours[]
-}
-
-export interface Provider {
-  id: string
-  name: string
-  role: Localized
-  /** Language codes the clinician works in. */
-  languages: Locale[]
-  serviceIds: ServiceId[]
-  locationIds: LocationId[]
-  about: Localized
-  image: string
-  initials: string
+  /**
+   * How many patients are seen in one ten-minute slot. Provisional: the real figure is not
+   * confirmed, so the demo uses one per slot. It is never multiplied by the number of
+   * clinics — there is one doctor, and his day is the limit.
+   */
+  slotCapacity: number
 }
 
 /**
- * A bookable opening. `startWall` is a wall-clock stamp in the clinics' timezone
- * (`YYYY-MM-DDTHH:mm`), never the viewer's local time.
+ * One consulting block: the doctor sitting in one clinic, from `startsAt` to `endsAt`
+ * minutes past midnight, on one weekday. `pause` is a break inside the block.
+ *
+ * Blocks never overlap, because there is only one of him.
  */
+export interface ClinicBlock {
+  /** 0 = Sunday … 6 = Saturday. */
+  weekday: number
+  locationId: LocationId
+  startsAt: number
+  endsAt: number
+  pause?: [number, number]
+}
+
+/**
+ * The single doctor. No qualifications, registrations, affiliations or years of practice
+ * are modelled here on purpose — see `src/data/doctor.ts`.
+ */
+export interface DoctorProfile {
+  name: string
+  initials: string
+  /** The kind of care offered, not a credential. */
+  care: Localized
+  tagline: Localized
+  /** The introduction on his page, one entry per paragraph. */
+  bio: Localized[]
+  /** The line that closes the page, above the booking button. */
+  invitation: Localized
+  languages: Locale[]
+  image: string
+  /** True while the portrait is a stand-in, which the interface then says. */
+  imageIsIllustrative: boolean
+  blocks: ClinicBlock[]
+  travelBufferMinutes: number
+}
+
+/** A bookable ten-minute slot at one clinic. Wall clock in the clinics' timezone. */
 export interface Slot {
   id: string
   serviceId: ServiceId
-  providerId: string
   locationId: LocationId
   startWall: string
-  durationMinutes: number
 }
 
 export interface PatientDetails {
@@ -83,39 +112,200 @@ export interface PatientDetails {
   coverage: Coverage | ''
 }
 
-export type AppointmentStatus = 'confirmed' | 'arrived' | 'completed' | 'cancelled'
+// --- the two independent statuses -------------------------------------------
+
+/**
+ * Where the appointment itself stands with the clinic.
+ *
+ * `requested` is what the public site produces: the patient has asked for a time and the
+ * clinic has not yet agreed to it.
+ */
+export type AppointmentStatus =
+  | 'requested'
+  | 'confirmed'
+  | 'arrived'
+  | 'completed'
+  | 'cancelled'
+  | 'unavailable'
 
 export const APPOINTMENT_STATUSES: AppointmentStatus[] = [
+  'requested',
   'confirmed',
   'arrived',
   'completed',
-  'cancelled'
+  'cancelled',
+  'unavailable'
 ]
 
-/** Statuses that still occupy a clinician's calendar. */
-export const BLOCKING_STATUSES: AppointmentStatus[] = ['confirmed', 'arrived', 'completed']
+/** Statuses that still take up a slot's capacity. */
+export const OCCUPYING_STATUSES: AppointmentStatus[] = [
+  'requested',
+  'confirmed',
+  'arrived',
+  'completed'
+]
+
+/**
+ * Where the same appointment stands in CureMD — which this application never talks to.
+ * Every value here records something a receptionist *declared* they did by hand.
+ */
+export type CuremdStatus =
+  | 'pending-registration'
+  | 'registered'
+  | 'change-pending'
+  | 'cancellation-pending'
+  | 'cancelled'
+  | 'not-required'
+
+export const CUREMD_STATUSES: CuremdStatus[] = [
+  'pending-registration',
+  'registered',
+  'change-pending',
+  'cancellation-pending',
+  'cancelled',
+  'not-required'
+]
+
+/** The three kinds of work that land in the CureMD inbox. */
+export type CuremdTask = 'registration' | 'change' | 'cancellation'
+
+/** What reception declared they typed into CureMD, kept verbatim. */
+export interface RegisteredSnapshot {
+  startWall: string
+  locationId: LocationId
+  serviceId: ServiceId
+  patientName: string
+}
+
+export interface CuremdRecord {
+  status: CuremdStatus
+  /** The appointment reference CureMD gave reception, if they noted it down. */
+  reference: string | null
+  /** The data reception says is in CureMD right now. */
+  registered: RegisteredSnapshot | null
+  declaredAtWall: string | null
+  operator: string | null
+}
+
+/** A time reception has offered a patient who asked for one that was not available. */
+export interface Proposal {
+  startWall: string
+  locationId: LocationId
+  proposedAtWall: string
+}
+
+/** A time the clinic or a waiting patient wants, not yet reflected in CureMD. */
+export interface PendingChange {
+  startWall: string
+  locationId: LocationId
+  requestedAtWall: string
+  source: 'reception' | 'waitlist'
+  offerId: string | null
+}
+
+export type AuditKind =
+  | 'request-created'
+  | 'appointment-confirmed'
+  | 'registration-declared'
+  | 'change-requested'
+  | 'change-applied'
+  | 'change-abandoned'
+  | 'cancellation-requested'
+  | 'cancellation-completed'
+  | 'marked-unavailable'
+  | 'alternative-proposed'
+  | 'alternative-accepted'
+  | 'note-added'
+  | 'offer-sent'
+  | 'offer-accepted'
+  | 'offer-declined'
+  | 'offer-expired'
+  | 'arrival-recorded'
+  | 'room-assigned'
+  | 'room-corrected'
+  | 'slip-print-requested'
+  | 'visit-finished'
+
+export interface AuditEntry {
+  id: string
+  atWall: string
+  /** Always the demonstration operator; this app has no sign-in. */
+  operator: string
+  kind: AuditKind
+  reference?: string | null
+  note?: string
+  detail?: Record<string, string | number>
+}
 
 export interface Appointment {
   id: string
-  /** Short human reference shown to the patient and used by reception search. */
+  /** Lorba's own reference, shown to the patient. Not a CureMD reference. */
   reference: string
   serviceId: ServiceId
-  providerId: string
   locationId: LocationId
   startWall: string
-  durationMinutes: number
   patientType: PatientType
   patient: PatientDetails
   status: AppointmentStatus
+  curemd: CuremdRecord
+  pendingChange: PendingChange | null
+  /** An alternative reception has put to the patient, who has not accepted it yet. */
+  proposal: Proposal | null
+  /** Null until someone records that the patient arrived. */
+  visit: Visit | null
+  /** Bumped on every write, so a dialog opened on stale data can be caught. */
+  version: number
   createdAtWall: string
+  audit: AuditEntry[]
 }
 
-export const BOOKING_STEPS = ['visit', 'place', 'when', 'details'] as const
-export type BookingStep = (typeof BOOKING_STEPS)[number]
+// --- what happens once the patient is in the building -----------------------
 
-// --- Waitlist ---------------------------------------------------------------
+/**
+ * A room inside a clinic. A room is a *place*, not a doctor and not a service: three rooms
+ * do not mean three doctors, and they never add to how many appointments Dr. Lorba can see.
+ */
+export interface ConsultingRoom {
+  id: string
+  locationId: LocationId
+  name: Localized
+}
 
-/** The three parts of a clinic day a patient can say they are able to attend. */
+/**
+ * Where the visit stands. This is a **third** state, independent of the appointment status
+ * and of the CureMD record, and the interface never blends the three.
+ *
+ * Three values, on purpose. The front desk records that someone walked in and that they
+ * left; what happens in between is the consulting room's business, not reception's, and
+ * asking a receptionist to tick off each stage of it only invites a half-kept diary.
+ */
+export type CareStage = 'not-arrived' | 'in-clinic' | 'finished'
+
+export const CARE_STAGES: CareStage[] = ['not-arrived', 'in-clinic', 'finished']
+
+/**
+ * The visit: what happened after the patient walked in. Absent until someone records an
+ * arrival, which is why it hangs off the appointment as a nullable rather than defaulting.
+ */
+export interface Visit {
+  arrivedAtWall: string
+  /** Always the demonstration operator; this app has no sign-in. */
+  arrivedBy: string
+  stage: CareStage
+  /**
+   * The room, chosen once when the patient arrives and kept for the whole visit. It can be
+   * corrected if the wrong one was picked, but the patient is not shuttled between rooms.
+   */
+  roomId: string | null
+  /** When they left. Set by finishing the visit, which also frees the room. */
+  leftAtWall: string | null
+  /** How many times a slip has been *asked* for. Printing is never claimed to have happened. */
+  printsRequested: number
+  lastPrintAtWall: string | null
+}
+
+// --- waitlist ---------------------------------------------------------------
+
 export type TimeBand = 'morning' | 'afternoon' | 'evening'
 
 export const TIME_BANDS: TimeBand[] = ['morning', 'afternoon', 'evening']
@@ -124,8 +314,6 @@ export interface WaitlistPreferences {
   serviceId: ServiceId
   /** Clinics the patient would accept; at least one. */
   locationIds: LocationId[]
-  providerId: ProviderChoice
-  /** Inclusive window the patient is available in, as date keys. */
   fromKey: string
   toKey: string
   /** 0 = Sunday … 6 = Saturday. */
@@ -141,10 +329,7 @@ export interface WaitlistEntry {
   reference: string
   patient: PatientDetails
   preferences: WaitlistPreferences
-  /**
-   * The booking this entry is attached to, when the patient already has an appointment
-   * and only wants something sooner. Any offer must then be earlier than it.
-   */
+  /** The appointment this entry is attached to, when the patient wants an earlier one. */
   linkedAppointmentId: string | null
   status: WaitlistStatus
   createdAtWall: string
@@ -152,10 +337,6 @@ export interface WaitlistEntry {
 
 export type OfferStatus = 'pending' | 'accepted' | 'declined' | 'expired' | 'withdrawn'
 
-/**
- * A slot offered to one waiting patient. While it is `pending` it also holds the slot, so
- * the same time cannot be offered twice or booked from the public site underneath.
- */
 export interface Offer {
   id: string
   entryId: string
@@ -163,15 +344,14 @@ export interface Offer {
   slot: Slot
   status: OfferStatus
   createdAtWall: string
-  /** When the hold lapses; after this the slot goes back on sale. */
+  /** When an unanswered offer lapses. Once accepted the slot is held without an expiry. */
   holdUntilWall: string
-  /** Set once accepted. */
+  /** The request or reschedule the acceptance produced. */
   appointmentId: string | null
-  /** The appointment the patient gave up to take this one, if any. */
   replacedAppointmentId: string | null
 }
 
-/** A slot that came free and has not been filled yet. */
+/** A slot that has come free and has not been filled yet. */
 export interface Opening {
   id: string
   slot: Slot
@@ -180,27 +360,22 @@ export interface Opening {
   status: 'open' | 'filled' | 'dismissed'
 }
 
-export type ActivityKind =
-  | 'appointment-cancelled'
-  | 'appointment-rescheduled'
-  | 'opening-detected'
-  | 'offer-sent'
-  | 'offer-accepted'
-  | 'offer-declined'
-  | 'offer-expired'
+export type ActivityKind = AuditKind | 'opening-detected'
 
 export interface ActivityEvent {
   id: string
   kind: ActivityKind
   atWall: string
+  operator: string
   locationId: LocationId | null
-  /** Already-resolved fragments; the interface supplies the sentence around them. */
+  appointmentId: string | null
   detail: {
     patient?: string
     service?: string
-    provider?: string
     when?: string
+    was?: string
     count?: number
+    reference?: string
   }
 }
 
@@ -212,3 +387,9 @@ export interface DemoState {
   openings: Opening[]
   activity: ActivityEvent[]
 }
+
+export const BOOKING_STEPS = ['visit', 'place', 'when', 'details'] as const
+export type BookingStep = (typeof BOOKING_STEPS)[number]
+
+/** The only operator this demo has. There is no authentication of any kind. */
+export const DEMO_OPERATOR = { id: 'demo-reception', name: 'Demo Reception' } as const

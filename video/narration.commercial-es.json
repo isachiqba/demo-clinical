@@ -1,0 +1,25 @@
+{
+  "voice": "es_ES-sharvard-medium",
+  "note": "Corte comercial en castellano. Una línea por rótulo de cues.commercial-es.json, escrita para caber en el hueco hasta el siguiente. Edita el texto y vuelve a lanzar LOCALE=es VARIANT=commercial node scripts/narrate.mjs; avisa de cualquier línea que se pase de su tiempo.",
+  "lines": [
+    "Tres clínicas. Una sola agenda.",
+    "Una consulta de atención primaria con tres clínicas de barrio, gestionadas como una.",
+    "El paciente elige la clínica que le conviene, y conserva su profesional.",
+    "Pedir cita son cuatro pasos breves, empezando por el motivo de la consulta.",
+    "Después, dónde y con quién. Al elegir cualquier sede se buscan las tres clínicas a la vez, porque detrás hay una sola agenda.",
+    "Los horarios que aparecen son disponibilidad real, calculada sobre esa misma agenda.",
+    "Unos pocos datos, y no se pide nada más.",
+    "La cita queda confirmada al momento, con una referencia.",
+    "Recepción trabaja sobre la misma agenda. Ni una copia, ni un segundo sistema.",
+    "En otro punto del día, un paciente anula.",
+    "Ese hueco pasa directo a la lista de espera.",
+    "A dos de las tres personas en espera les encaja, y se ve por qué.",
+    "Recepción lo ofrece, con el mensaje ya escrito.",
+    "El horario queda reservado, con un plazo visible.",
+    "El paciente acepta, y la agenda se actualiza al instante.",
+    "El hueco queda cubierto y la anulación sigue en el tablero.",
+    "Y una sola vista cubre las tres clínicas, con los mismos datos.",
+    "Ocupación, tiempo reservado y tiempo libre.",
+    "Lorba Medical."
+  ]
+}

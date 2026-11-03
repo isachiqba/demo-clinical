@@ -5,7 +5,6 @@ import { localized } from '@/i18n'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import PageHeader from '@/components/layout/PageHeader.vue'
-import ApproachBand from '@/components/home/ApproachBand.vue'
 
 const { t } = useI18n()
 </script>
@@ -21,9 +20,7 @@ const { t } = useI18n()
             <span class="service__icon"><AppIcon :name="service.icon" :size="22" /></span>
             <div>
               <h2 class="service__name">{{ localized(service.name) }}</h2>
-              <p class="service__duration">
-                {{ t('care.duration') }}: {{ t('common.minutes', { count: service.durationMinutes }) }}
-              </p>
+
             </div>
           </div>
           <p class="service__detail">{{ localized(service.detail) }}</p>
@@ -45,7 +42,6 @@ const { t } = useI18n()
     </div>
   </section>
 
-  <ApproachBand />
 </template>
 
 <style scoped>

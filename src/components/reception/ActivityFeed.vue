@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { providerById } from '@/data/providers'
 import { serviceById } from '@/data/services'
 import { localized } from '@/i18n'
 import { formatWallDate, formatWallTime } from '@/services/clinicTime'
@@ -14,13 +13,17 @@ const { t, locale } = useI18n()
 
 const shown = computed(() => props.events.slice(0, props.limit ?? 12))
 
+const moment = (wall?: string): string =>
+  wall
+    ? `${formatWallDate(wall, locale.value, { day: 'numeric', month: 'short' })}, ${formatWallTime(wall, locale.value)}`
+    : ''
+
 const paramsFor = (event: ActivityEvent): Record<string, string | number> => ({
   patient: event.detail.patient ?? '',
   service: event.detail.service ? localized(serviceById(event.detail.service)?.name) : '',
-  provider: event.detail.provider ? providerById(event.detail.provider)?.name ?? '' : '',
-  when: event.detail.when
-    ? `${formatWallDate(event.detail.when, locale.value, { day: 'numeric', month: 'short' })}, ${formatWallTime(event.detail.when, locale.value)}`
-    : '',
+  when: moment(event.detail.when),
+  was: moment(event.detail.was),
+  reference: event.detail.reference ?? '',
   count: event.detail.count ?? 0
 })
 
@@ -30,16 +33,27 @@ const sentence = (event: ActivityEvent): string =>
     ? t(`reception.activity.${event.kind}`, paramsFor(event), event.detail.count ?? 0)
     : t(`reception.activity.${event.kind}`, paramsFor(event))
 
-const toneOf = (event: ActivityEvent): string =>
-  ({
-    'appointment-cancelled': 'warn',
-    'appointment-rescheduled': 'neutral',
-    'opening-detected': 'accent',
-    'offer-sent': 'accent',
-    'offer-accepted': 'good',
-    'offer-declined': 'neutral',
-    'offer-expired': 'neutral'
-  })[event.kind]
+const TONES: Record<string, string> = {
+  'request-created': 'accent',
+  'registration-declared': 'accent',
+  'appointment-confirmed': 'good',
+  'change-requested': 'warn',
+  'change-applied': 'good',
+  'change-abandoned': 'neutral',
+  'cancellation-requested': 'warn',
+  'cancellation-completed': 'neutral',
+  'marked-unavailable': 'warn',
+  'alternative-proposed': 'accent',
+  'alternative-accepted': 'good',
+  'opening-detected': 'accent',
+  'offer-sent': 'accent',
+  'offer-accepted': 'good',
+  'offer-declined': 'neutral',
+  'offer-expired': 'neutral',
+  'note-added': 'neutral'
+}
+
+const toneOf = (event: ActivityEvent): string => TONES[event.kind] ?? 'neutral'
 </script>
 
 <template>

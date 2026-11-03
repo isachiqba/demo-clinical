@@ -1,13 +1,17 @@
+import { doctor } from '@/data/doctor'
 import { locationById } from '@/data/locations'
-import { providerById } from '@/data/providers'
 import { serviceById } from '@/data/services'
 import type { Appointment, Locale } from '@/types'
+import { SLOT_MINUTES } from '@/types'
 import { CLINIC_TIME_ZONE, addMinutesToWall, wallToInstant } from './clinicTime'
 
 /**
  * Builds an iCalendar file for a demo appointment. Times are written as UTC stamps
  * derived from the clinic's wall clock, which is correct on both sides of a daylight
  * saving change, and the event is labelled DEMO so it cannot be mistaken for a real one.
+ *
+ * Only offered for appointments the clinic has confirmed: a request, or a move that
+ * reception has not yet applied in CureMD, is not something to put in someone's diary.
  */
 
 const pad = (value: number): string => String(value).padStart(2, '0')
@@ -39,45 +43,41 @@ const fold = (line: string): string => {
 
 export const buildAppointmentIcs = (appointment: Appointment, locale: Locale): string => {
   const service = serviceById(appointment.serviceId)
-  const provider = providerById(appointment.providerId)
   const location = locationById(appointment.locationId)
 
   const serviceName = service ? service.name[locale] : appointment.serviceId
   const locationName = location ? location.name[locale] : appointment.locationId
-  const title =
-    locale === 'es'
-      ? `[DEMO] ${serviceName} — Lorba Medical ${locationName}`
-      : `[DEMO] ${serviceName} — Lorba Medical ${locationName}`
+  const title = `[DEMO] ${serviceName} — ${doctor.name}, ${locationName}`
 
   const description =
     locale === 'es'
       ? [
-          'Reserva de DEMOSTRACIÓN de Lorba Medical. No es una cita médica real.',
+          `Cita de DEMOSTRACIÓN con ${doctor.name}. No es una cita médica real.`,
           `Referencia: ${appointment.reference}`,
-          `Profesional: ${provider?.name ?? ''} (perfil ficticio)`,
+          `Consulta de ${doctor.name} en ${locationName}.`,
           `Horario de la clínica: ${CLINIC_TIME_ZONE}`
         ]
       : [
-          'DEMONSTRATION booking from Lorba Medical. This is not a real medical appointment.',
+          `DEMONSTRATION appointment with ${doctor.name}. This is not a real medical appointment.`,
           `Reference: ${appointment.reference}`,
-          `Clinician: ${provider?.name ?? ''} (fictional profile)`,
+          `${doctor.name}'s consulting rooms at ${locationName}.`,
           `Clinic timezone: ${CLINIC_TIME_ZONE}`
         ]
 
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Lorba Medical Demo//EN',
+    'PRODID:-//Dr. Lorba Demo//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    `UID:${appointment.reference}-${appointment.id}@lorba-medical.demo`,
+    `UID:${appointment.reference}-${appointment.id}@dr-lorba.demo`,
     `DTSTAMP:${toUtcStamp(appointment.createdAtWall)}`,
     `DTSTART:${toUtcStamp(appointment.startWall)}`,
-    `DTEND:${toUtcStamp(addMinutesToWall(appointment.startWall, appointment.durationMinutes))}`,
+    `DTEND:${toUtcStamp(addMinutesToWall(appointment.startWall, SLOT_MINUTES))}`,
     `SUMMARY:${escapeText(title)}`,
     `DESCRIPTION:${escapeText(description.join('\n'))}`,
-    `LOCATION:${escapeText(`Lorba Medical ${locationName} (demo)`)}`,
+    `LOCATION:${escapeText(`${doctor.name} — ${locationName} (demo)`)}`,
     'STATUS:CONFIRMED',
     'CATEGORIES:DEMO',
     'END:VEVENT',
@@ -87,6 +87,14 @@ export const buildAppointmentIcs = (appointment: Appointment, locale: Locale): s
   return lines.map(fold).join('\r\n')
 }
 
+/** A calendar file is only offered once the clinic has confirmed the appointment. */
+export const canExportIcs = (appointment: Appointment): boolean =>
+  (appointment.status === 'confirmed' ||
+    appointment.status === 'arrived' ||
+    appointment.status === 'completed') &&
+  appointment.pendingChange === null &&
+  appointment.curemd.status === 'registered'
+
 export const downloadIcs = (appointment: Appointment, locale: Locale): void => {
   const blob = new Blob([buildAppointmentIcs(appointment, locale)], {
     type: 'text/calendar;charset=utf-8'
@@ -94,7 +102,7 @@ export const downloadIcs = (appointment: Appointment, locale: Locale): void => {
   const url = URL.createObjectURL(blob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `lorba-medical-demo-${appointment.reference}.ics`
+  link.download = `dr-lorba-demo-${appointment.reference}.ics`
   document.body.appendChild(link)
   link.click()
   link.remove()

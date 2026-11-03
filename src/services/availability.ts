@@ -1,221 +1,260 @@
-import { locationById } from '@/data/locations'
-import { providerById, providersFor } from '@/data/providers'
-import { serviceById } from '@/data/services'
-import type { Appointment, LocationId, ServiceId, Slot } from '@/types'
-import { BLOCKING_STATUSES } from '@/types'
+import { blocksAt, blocksOnWeekday, doctor } from '@/data/doctor'
+import { locationById, locations } from '@/data/locations'
+import type { Appointment, LocationId, Offer, ServiceId, Slot } from '@/types'
+import { OCCUPYING_STATUSES, SLOT_MINUTES } from '@/types'
 import {
   addDaysToKey,
-  addMinutesToWall,
   dateKeyOf,
   makeWall,
   minutesOf,
   minutesUntilWall,
+  nowWall,
   weekdayOfKey,
   type DateKey
 } from './clinicTime'
 
 /**
- * Generates a clinic's open slots. Pure: it takes the day and the appointments that
- * already exist and returns what is left, so the same inputs always give the same grid.
- * A real back end would replace this file and nothing above it would change.
+ * What the doctor has left.
+ *
+ * There is **one doctor** working across three clinics, so there is one agenda, not three.
+ * A slot exists only where he is actually sitting that day, and taking a time at one
+ * clinic removes it from his day everywhere — including the clinics he is not in, because
+ * he cannot be in two places at once.
+ *
+ * Three things the interface is careful about, and so is this file:
+ *
+ *  - Times are offered on a **ten-minute grid**. That is a booking interval, nothing more;
+ *    it is not a claim about how long an appointment lasts.
+ *  - This is the demo's **local** picture only. Nothing here reads CureMD, so a time being
+ *    free here is not a promise that it is free in the practice's real diary.
+ *  - Capacity is the doctor's, never the clinic's multiplied by three.
  */
 
-/** Nothing can be booked less than this far ahead. */
+/** Nothing can be requested less than this far ahead. */
 export const LEAD_TIME_MINUTES = 120
-const LUNCH_START = 12 * 60
-const LUNCH_END = 13 * 60
 
-const hashString = (value: string): number => {
-  let hash = 2166136261
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index)
-    hash = Math.imul(hash, 16777619)
+/**
+ * Provisional until the practice confirms it: one patient per ten-minute slot. It lives on
+ * the clinic so a different figure per site is a data change, not a code change. It is the
+ * number seen in one slot, not a per-clinic allowance that could be added together.
+ */
+export const slotCapacityOf = (locationId: LocationId): number =>
+  locationById(locationId)?.slotCapacity ?? 1
+
+export const slotId = (locationId: LocationId, startWall: string): string =>
+  `${locationId}|${startWall}`
+
+/** Is this minute inside a break the doctor takes during that block? */
+const inPause = (block: { pause?: [number, number] }, minute: number): boolean =>
+  block.pause !== undefined && minute + SLOT_MINUTES > block.pause[0] && minute < block.pause[1]
+
+/**
+ * Every ten-minute start the doctor offers at one clinic on one day, before anything is
+ * taken. Comes from his consulting blocks, narrowed to the hours the clinic is actually
+ * open: a clinic can be open when he is elsewhere, but he is never there when it is shut.
+ */
+export const gridFor = (locationId: LocationId, dateKey: DateKey): string[] => {
+  const location = locationById(locationId)
+  if (!location) return []
+
+  const weekday = weekdayOfKey(dateKey)
+  const opening = location.hours.find((entry) => entry.weekday === weekday)
+  if (!opening || opening.opensAt === null || opening.closesAt === null) return []
+
+  const starts: string[] = []
+  for (const block of blocksAt(weekday, locationId)) {
+    const from = Math.max(block.startsAt, opening.opensAt)
+    const to = Math.min(block.endsAt, opening.closesAt)
+    for (let minute = from; minute + SLOT_MINUTES <= to; minute += SLOT_MINUTES) {
+      if (inPause(block, minute)) continue
+      starts.push(makeWall(dateKey, minute))
+    }
   }
-  return hash >>> 0
+  return starts.sort()
 }
 
-/** mulberry32: small and deterministic, so a demo can be replayed. */
-const seededRandom = (seed: number): (() => number) => {
-  let state = seed
-  return () => {
-    state = (state + 0x6d2b79f5) | 0
-    let t = Math.imul(state ^ (state >>> 15), 1 | state)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-interface Busy {
-  providerId: string
-  startMinutes: number
-  endMinutes: number
-}
-
-/** Appointments on `dateKey` that still hold a place in a clinician's day. */
-const busyOn = (appointments: Appointment[], dateKey: DateKey): Busy[] =>
-  appointments
-    .filter(
-      (appointment) =>
-        BLOCKING_STATUSES.includes(appointment.status) &&
-        dateKeyOf(appointment.startWall) === dateKey
+/** Every slot he offers that day, at whichever clinic, earliest first. */
+export const dayGrid = (dateKey: DateKey): { locationId: LocationId; startWall: string }[] =>
+  blocksOnWeekday(weekdayOfKey(dateKey))
+    .flatMap((block) =>
+      gridFor(block.locationId, dateKey).map((startWall) => ({
+        locationId: block.locationId,
+        startWall
+      }))
     )
-    .map((appointment) => ({
-      providerId: appointment.providerId,
-      startMinutes: minutesOf(appointment.startWall),
-      endMinutes: minutesOf(appointment.startWall) + appointment.durationMinutes
-    }))
+    .filter(
+      (slot, index, all) =>
+        all.findIndex((other) => other.startWall === slot.startWall && other.locationId === slot.locationId) === index
+    )
+    .sort((a, b) => a.startWall.localeCompare(b.startWall))
 
-/** A pending offer holds its slot exactly as a booking would. */
-const holdsOn = (holds: Slot[], dateKey: DateKey): Busy[] =>
-  holds
-    .filter((hold) => dateKeyOf(hold.startWall) === dateKey)
-    .map((hold) => ({
-      providerId: hold.providerId,
-      startMinutes: minutesOf(hold.startWall),
-      endMinutes: minutesOf(hold.startWall) + hold.durationMinutes
-    }))
+/**
+ * How many slots the doctor offers at one clinic in a day, before anything is taken. A
+ * clinic's capacity is only the blocks he spends there — on a day he is elsewhere it is
+ * zero, however long the doors are open.
+ */
+export const dayCapacity = (locationId: LocationId, dateKey: DateKey): number =>
+  gridFor(locationId, dateKey).length * slotCapacityOf(locationId)
 
-const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number): boolean =>
-  aStart < bEnd && bStart < aEnd
-
-export interface DayQuery {
-  serviceId: ServiceId
-  locationId: LocationId
-  providerId: string
-  dateKey: DateKey
+export interface Occupancy {
+  /** Requests and confirmed appointments sitting on their own time. */
   appointments: Appointment[]
-  /** Slots held by a pending offer; treated exactly like a booking. */
-  holds?: Slot[]
-  now?: Date
+  /** Offers still waiting for an answer; their slot is held meanwhile. */
+  offers: Offer[]
 }
 
 /**
- * The window a clinician works at one clinic on one day, lunch removed. Used both to
- * place slots and to measure how much capacity a clinic is actually offering.
+ * What a single ten-minute slot at one clinic is already carrying. A pending reschedule
+ * counts against the *new* time as well, so two of them cannot land on the same slot, and a
+ * cancellation reception has not yet done in CureMD still counts against the old one.
+ *
+ * This counts one clinic. The doctor's day as a whole is `conflictsElsewhere`.
  */
-export const providerDayWindow = (
-  providerId: string,
-  locationId: LocationId,
-  dateKey: DateKey
-): { startMinutes: number; endMinutes: number; minutes: number } | null => {
-  const provider = providerById(providerId)
-  const location = locationById(locationId)
-  if (!provider || !location) return null
-  if (!provider.locationIds.includes(location.id)) return null
+export const takenAt = (locationId: LocationId, startWall: string, state: Occupancy): number => {
+  const booked = state.appointments.filter(
+    (appointment) =>
+      OCCUPYING_STATUSES.includes(appointment.status) &&
+      appointment.locationId === locationId &&
+      appointment.startWall === startWall
+  ).length
 
-  const opening = location.hours.find((entry) => entry.weekday === weekdayOfKey(dateKey))
-  if (!opening || opening.opensAt === null || opening.closesAt === null) return null
+  const moving = state.appointments.filter(
+    (appointment) =>
+      OCCUPYING_STATUSES.includes(appointment.status) &&
+      appointment.pendingChange !== null &&
+      appointment.pendingChange.locationId === locationId &&
+      appointment.pendingChange.startWall === startWall
+  ).length
 
-  const random = seededRandom(hashString(`${provider.id}|${location.id}|${dateKey}`))
-  const startMinutes = opening.opensAt + Math.floor(random() * 3) * 30
-  const endMinutes = opening.closesAt - Math.floor(random() * 3) * 30
-  if (endMinutes <= startMinutes) return null
+  // A time put to a patient as an alternative is held locally so nobody else takes it
+  // while they think about it.
+  const proposed = state.appointments.filter(
+    (appointment) =>
+      appointment.status === 'requested' &&
+      appointment.proposal !== null &&
+      appointment.proposal.locationId === locationId &&
+      appointment.proposal.startWall === startWall
+  ).length
 
-  const lunch = Math.max(
-    0,
-    Math.min(endMinutes, LUNCH_END) - Math.max(startMinutes, LUNCH_START)
-  )
-  return { startMinutes, endMinutes, minutes: endMinutes - startMinutes - lunch }
+  const held = state.offers.filter(
+    (offer) =>
+      offer.status === 'pending' &&
+      offer.holdUntilWall > nowWall() &&
+      offer.slot.locationId === locationId &&
+      offer.slot.startWall === startWall
+  ).length
+
+  return booked + moving + proposed + held
 }
 
-/** Open slots for one clinician, at one clinic, on one day. */
-export const slotsForProviderDay = (query: DayQuery): Slot[] => {
-  const service = serviceById(query.serviceId)
-  const provider = providerById(query.providerId)
-  const location = locationById(query.locationId)
-  if (!service || !provider || !location) return []
-  if (!provider.serviceIds.includes(service.id)) return []
-  if (!provider.locationIds.includes(location.id)) return []
+/** Everything the doctor is committed to at a given time, wherever it is. */
+const commitmentsAt = (state: Occupancy): { locationId: LocationId; startWall: string }[] => {
+  const live = state.appointments.filter((appointment) =>
+    OCCUPYING_STATUSES.includes(appointment.status)
+  )
+  return [
+    ...live.map((appointment) => ({
+      locationId: appointment.locationId,
+      startWall: appointment.startWall
+    })),
+    // A change not yet applied in CureMD holds its new time as well as its old one.
+    ...live
+      .filter((appointment) => appointment.pendingChange !== null)
+      .map((appointment) => ({
+        locationId: appointment.pendingChange!.locationId,
+        startWall: appointment.pendingChange!.startWall
+      })),
+    ...state.appointments
+      .filter((appointment) => appointment.status === 'requested' && appointment.proposal !== null)
+      .map((appointment) => ({
+        locationId: appointment.proposal!.locationId,
+        startWall: appointment.proposal!.startWall
+      })),
+    ...state.offers
+      .filter((offer) => offer.status === 'pending' && offer.holdUntilWall > nowWall())
+      .map((offer) => ({ locationId: offer.slot.locationId, startWall: offer.slot.startWall }))
+  ]
+}
 
-  const window = providerDayWindow(provider.id, location.id, query.dateKey)
-  if (!window) return []
+/**
+ * Is the doctor already committed somewhere that rules this slot out?
+ *
+ * Two ways that happens, and both matter because there is only one of him:
+ *
+ *  - he is booked at **another clinic at the same time**; or
+ *  - he is booked at another clinic **too close to it** to get across town in between.
+ *
+ * The consulting blocks are authored so this cannot arise from the timetable itself, but
+ * reschedules, waitlist offers and hand-edited demo data all write times directly, so the
+ * rule is enforced here rather than assumed.
+ */
+export const conflictsElsewhere = (
+  locationId: LocationId,
+  startWall: string,
+  state: Occupancy
+): boolean => {
+  const minute = minutesOf(startWall)
+  const dateKey = dateKeyOf(startWall)
+  const buffer = doctor.travelBufferMinutes
 
-  // A second generator, seeded identically, decides which of the slots are already gone.
-  const random = seededRandom(hashString(`${provider.id}|${location.id}|${query.dateKey}`))
-  random()
-  random()
+  return commitmentsAt(state).some((commitment) => {
+    if (commitment.locationId === locationId) return false
+    if (dateKeyOf(commitment.startWall) !== dateKey) return false
+    const other = minutesOf(commitment.startWall)
+    // Either on top of each other, or not far enough apart to travel between.
+    const gap = minute >= other ? minute - (other + SLOT_MINUTES) : other - (minute + SLOT_MINUTES)
+    return gap < buffer
+  })
+}
 
-  // The grid steps by the appointment's own length, so two offered times never overlap.
-  const step = service.durationMinutes
-  const shiftStart = window.startMinutes
-  const shiftEnd = window.endMinutes
+export interface SlotQuery {
+  serviceId: ServiceId
+  locationId: LocationId
+  dateKey: DateKey
+  state: Occupancy
+  now?: Date
+}
 
-  const busy = [...busyOn(query.appointments, query.dateKey), ...holdsOn(query.holds ?? [], query.dateKey)]
-    .filter((entry) => entry.providerId === provider.id)
+/** Slots a patient could still ask for at one clinic on one day. */
+export const slotsForDay = (query: SlotQuery): Slot[] => {
+  const capacity = slotCapacityOf(query.locationId)
   const now = query.now ?? new Date()
-  const slots: Slot[] = []
 
-  for (let minute = shiftStart; minute + service.durationMinutes <= shiftEnd; minute += step) {
-    const end = minute + service.durationMinutes
-    if (overlaps(minute, end, LUNCH_START, LUNCH_END)) continue
-
-    // Roughly half the grid is taken by patients the demo never shows.
-    if (random() < 0.5) continue
-    if (busy.some((entry) => overlaps(minute, end, entry.startMinutes, entry.endMinutes))) continue
-
-    const startWall = makeWall(query.dateKey, minute)
-    if (minutesUntilWall(startWall, now) < LEAD_TIME_MINUTES) continue
-
-    slots.push({
-      id: `${provider.id}|${location.id}|${startWall}`,
-      serviceId: service.id,
-      providerId: provider.id,
-      locationId: location.id,
-      startWall,
-      durationMinutes: service.durationMinutes
-    })
-  }
-
-  return slots
+  return gridFor(query.locationId, query.dateKey)
+    .filter((startWall) => minutesUntilWall(startWall, now) >= LEAD_TIME_MINUTES)
+    .filter((startWall) => takenAt(query.locationId, startWall, query.state) < capacity)
+    .filter((startWall) => !conflictsElsewhere(query.locationId, startWall, query.state))
+    .map((startWall) => ({
+      id: slotId(query.locationId, startWall),
+      serviceId: query.serviceId,
+      locationId: query.locationId,
+      startWall
+    }))
 }
 
 export interface SearchQuery {
   serviceId: ServiceId
-  /** `'any'` searches every clinic that has a clinician for this service. */
+  /** `'any'` searches every clinic. */
   locationId: LocationId | 'any'
-  /** `'any'` searches every eligible clinician. */
-  providerId: string | 'any'
   dateKey: DateKey
-  appointments: Appointment[]
-  holds?: Slot[]
+  state: Occupancy
   now?: Date
 }
 
-const expand = (query: SearchQuery): { locationId: LocationId; providerId: string }[] => {
-  const pairs: { locationId: LocationId; providerId: string }[] = []
-  for (const provider of providersFor(query.serviceId)) {
-    if (query.providerId !== 'any' && provider.id !== query.providerId) continue
-    for (const locationId of provider.locationIds) {
-      if (query.locationId !== 'any' && locationId !== query.locationId) continue
-      pairs.push({ locationId, providerId: provider.id })
-    }
-  }
-  return pairs
-}
+const clinicsIn = (locationId: LocationId | 'any'): LocationId[] =>
+  locationId === 'any' ? locations.map((location) => location.id) : [locationId]
 
 /**
- * Open slots across whatever the patient left open. When two clinicians are free at the
- * same minute only one slot is offered, picked in a stable order so the list never
- * reshuffles between renders.
+ * `'any'` means "wherever he is soonest", so it searches the one agenda rather than three.
+ * Because a day's blocks never overlap, the clinics cannot offer the same minute twice and
+ * the result is simply his next free time.
  */
-export const slotsForDay = (query: SearchQuery): Slot[] => {
-  const found = new Map<string, Slot>()
-  for (const pair of expand(query)) {
-    const slots = slotsForProviderDay({
-      serviceId: query.serviceId,
-      locationId: pair.locationId,
-      providerId: pair.providerId,
-      dateKey: query.dateKey,
-      appointments: query.appointments,
-      holds: query.holds,
-      now: query.now
-    })
-    for (const slot of slots) {
-      if (!found.has(slot.startWall)) found.set(slot.startWall, slot)
-    }
-  }
-  return [...found.values()].sort((a, b) => a.startWall.localeCompare(b.startWall))
-}
+
+/** Open slots across whatever the patient left open, earliest first. */
+export const searchDay = (query: SearchQuery): Slot[] =>
+  clinicsIn(query.locationId)
+    .flatMap((locationId) => slotsForDay({ ...query, locationId }))
+    .sort((a, b) => a.startWall.localeCompare(b.startWall) || a.locationId.localeCompare(b.locationId))
 
 /** How many openings each of the next `days` days holds, keyed by date. */
 export const slotCounts = (
@@ -224,49 +263,34 @@ export const slotCounts = (
   const counts: Record<DateKey, number> = {}
   for (let offset = 0; offset < query.days; offset += 1) {
     const dateKey = addDaysToKey(query.fromKey, offset)
-    counts[dateKey] = slotsForDay({ ...query, dateKey }).length
+    counts[dateKey] = searchDay({ ...query, dateKey }).length
   }
   return counts
 }
 
-/** The genuinely first open slot, searched day by day — never a hard-coded date. */
+/** The genuinely soonest opening, searched day by day — never a hard-coded date. */
 export const firstAvailable = (
   query: Omit<SearchQuery, 'dateKey'> & { fromKey: DateKey; days?: number }
 ): Slot | null => {
   const horizon = query.days ?? 60
   for (let offset = 0; offset < horizon; offset += 1) {
-    const [slot] = slotsForDay({ ...query, dateKey: addDaysToKey(query.fromKey, offset) })
+    const [slot] = searchDay({ ...query, dateKey: addDaysToKey(query.fromKey, offset) })
     if (slot) return slot
   }
   return null
 }
 
-/** Is this exact slot still free, given the bookings and holds that exist right now? */
+/** Is this exact slot still askable, given everything on the books right now? */
 export const isSlotOpen = (
-  slot: Slot,
-  appointments: Appointment[],
-  holds: Slot[] = [],
+  slot: Pick<Slot, 'locationId' | 'startWall'>,
+  state: Occupancy,
   now = new Date()
 ): boolean => {
   if (minutesUntilWall(slot.startWall, now) < LEAD_TIME_MINUTES) return false
-  const start = minutesOf(slot.startWall)
-  const end = start + slot.durationMinutes
-  const taken = [...busyOn(appointments, dateKeyOf(slot.startWall)), ...holdsOn(holds, dateKeyOf(slot.startWall))]
-  return !taken.some(
-    (entry) =>
-      entry.providerId === slot.providerId && overlaps(start, end, entry.startMinutes, entry.endMinutes)
-  )
+  if (!gridFor(slot.locationId, dateKeyOf(slot.startWall)).includes(slot.startWall)) return false
+  if (conflictsElsewhere(slot.locationId, slot.startWall, state)) return false
+  return takenAt(slot.locationId, slot.startWall, state) < slotCapacityOf(slot.locationId)
 }
 
-/** Minutes a clinician's bookings occupy at one clinic on one day. */
-export const bookedMinutes = (appointments: Appointment[], dateKey: DateKey): number =>
-  appointments
-    .filter(
-      (appointment) =>
-        BLOCKING_STATUSES.includes(appointment.status) &&
-        dateKeyOf(appointment.startWall) === dateKey
-    )
-    .reduce((total, appointment) => total + appointment.durationMinutes, 0)
-
-export const slotEndWall = (slot: Slot): string =>
-  addMinutesToWall(slot.startWall, slot.durationMinutes)
+/** Minutes past midnight, for grouping a day into morning, afternoon and evening. */
+export const slotMinutes = (startWall: string): number => minutesOf(startWall)

@@ -35,8 +35,6 @@ const filter = computed<RangeFilter>(() => ({
 
 const metrics = computed(() => overviewMetrics(schedule.state, filter.value))
 
-const hours = (minutes: number): string => `${Math.round(minutes / 60)} h`
-
 const rangeLabel = computed(() =>
   rangeKey.value === 'today'
     ? formatWallDate(filter.value.fromKey, locale.value, { day: 'numeric', month: 'long' })
@@ -86,44 +84,48 @@ const rangeOptions: RangeKey[] = ['today', 'week', 'fortnight', 'month']
         <span class="block__hint">{{ rangeLabel }}</span>
       </h3>
       <ul class="tiles">
-        <li class="tile">
-          <span class="tile__value">{{ metrics.range.appointments }}</span>
-          <span class="tile__label">{{ t('reception.overview.metrics.appointments') }}</span>
+        <li class="tile tile--caution">
+          <span class="tile__value">{{ metrics.range.requested }}</span>
+          <span class="tile__label">{{ t('reception.overview.metrics.requested') }}</span>
         </li>
         <li class="tile">
           <span class="tile__value">{{ metrics.range.confirmed }}</span>
           <span class="tile__label">{{ t('reception.overview.metrics.confirmed') }}</span>
         </li>
         <li class="tile">
-          <span class="tile__value">{{ hours(metrics.range.freeMinutes) }}</span>
+          <span class="tile__value">{{ metrics.range.free }}</span>
           <span class="tile__label">{{ t('reception.overview.metrics.free') }}</span>
+        </li>
+        <li class="tile">
+          <span class="tile__value">{{ metrics.range.held }}</span>
+          <span class="tile__label">{{ t('reception.overview.metrics.held') }}</span>
         </li>
         <li class="tile">
           <span class="tile__value">{{ metrics.range.cancelled }}</span>
           <span class="tile__label">{{ t('reception.overview.metrics.cancelled') }}</span>
         </li>
       </ul>
-      <p class="block__note">{{ t('reception.overview.noPending') }}</p>
+      <p class="block__note">{{ t('reception.overview.localOnly') }}</p>
     </section>
 
     <section class="block">
       <h3 class="block__title">{{ t('reception.overview.rightNow') }}</h3>
       <ul class="tiles tiles--quiet">
         <li class="tile">
+          <span class="tile__value">{{ metrics.now.pendingRegistration }}</span>
+          <span class="tile__label">{{ t('reception.overview.metrics.pendingRegistration') }}</span>
+        </li>
+        <li class="tile">
+          <span class="tile__value">{{ metrics.now.pendingChange }}</span>
+          <span class="tile__label">{{ t('reception.overview.metrics.pendingChange') }}</span>
+        </li>
+        <li class="tile">
+          <span class="tile__value">{{ metrics.now.pendingCancellation }}</span>
+          <span class="tile__label">{{ t('reception.overview.metrics.pendingCancellation') }}</span>
+        </li>
+        <li class="tile">
           <span class="tile__value">{{ metrics.now.waiting }}</span>
           <span class="tile__label">{{ t('reception.overview.metrics.waiting') }}</span>
-        </li>
-        <li class="tile">
-          <span class="tile__value">{{ metrics.now.offered }}</span>
-          <span class="tile__label">{{ t('reception.overview.metrics.offered') }}</span>
-        </li>
-        <li class="tile">
-          <span class="tile__value">{{ metrics.now.openOpenings }}</span>
-          <span class="tile__label">{{ t('reception.overview.metrics.openings') }}</span>
-        </li>
-        <li class="tile">
-          <span class="tile__value">{{ metrics.now.activeHolds }}</span>
-          <span class="tile__label">{{ t('reception.overview.metrics.holds') }}</span>
         </li>
         <li class="tile tile--accent">
           <span class="tile__value">{{ metrics.now.filledFromWaitlist }}</span>
@@ -140,47 +142,51 @@ const rangeOptions: RangeKey[] = ['today', 'week', 'fortnight', 'month']
           <div class="site__head">
             <h4 class="site__name">{{ nameOf(site.locationId) }}</h4>
             <span class="site__occupancy">
-              {{ t('reception.overview.sites.occupancy', { percent: percent(site.occupancy) }) }}
+              {{ t('reception.overview.sites.share', { percent: percent(site.confirmedShare) }) }}
             </span>
           </div>
 
           <div
             class="bar"
             role="img"
-            :aria-label="`${nameOf(site.locationId)}: ${percent(site.occupancy)}%`"
+            :aria-label="`${nameOf(site.locationId)}: ${percent(site.confirmedShare)}%`"
           >
             <span
-              class="bar__part bar__part--booked"
-              :style="{ width: `${site.capacityMinutes ? (site.bookedMinutes / site.capacityMinutes) * 100 : 0}%` }"
+              class="bar__part bar__part--confirmed"
+              :style="{ width: `${site.capacity ? (site.confirmed / site.capacity) * 100 : 0}%` }"
+            />
+            <span
+              class="bar__part bar__part--requested"
+              :style="{ width: `${site.capacity ? (site.requested / site.capacity) * 100 : 0}%` }"
             />
             <span
               class="bar__part bar__part--held"
-              :style="{ width: `${site.capacityMinutes ? (site.heldMinutes / site.capacityMinutes) * 100 : 0}%` }"
+              :style="{ width: `${site.capacity ? (site.held / site.capacity) * 100 : 0}%` }"
             />
           </div>
 
           <dl class="site__numbers">
             <div>
-              <dt>{{ t('reception.overview.sites.booked') }}</dt>
-              <dd>{{ hours(site.bookedMinutes) }}</dd>
+              <dt>{{ t('reception.overview.sites.confirmed') }}</dt>
+              <dd>{{ site.confirmed }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('reception.overview.sites.requested') }}</dt>
+              <dd>{{ site.requested }}</dd>
             </div>
             <div>
               <dt>{{ t('reception.overview.sites.held') }}</dt>
-              <dd>{{ hours(site.heldMinutes) }}</dd>
+              <dd>{{ site.held }}</dd>
             </div>
             <div>
               <dt>{{ t('reception.overview.sites.free') }}</dt>
-              <dd>{{ hours(site.freeMinutes) }}</dd>
-            </div>
-            <div>
-              <dt>{{ t('reception.overview.metrics.cancelled') }}</dt>
-              <dd>{{ site.cancelled }}</dd>
+              <dd>{{ site.free }}</dd>
             </div>
           </dl>
 
           <div class="site__foot">
             <span class="site__count">
-              {{ t('reception.overview.sites.appointments', { count: site.appointments }, site.appointments) }}
+              {{ t('reception.overview.sites.capacity', { count: site.capacity }) }}
             </span>
             <AppButton
               size="sm"
@@ -293,6 +299,11 @@ const rangeOptions: RangeKey[] = ['today', 'week', 'fortnight', 'month']
   border-radius: var(--radius-sm);
 }
 
+.tile--caution {
+  border-color: #e8d2a8;
+  background: var(--caution-bg);
+}
+
 .tile--accent {
   border-color: var(--teal-200);
   background: var(--teal-50);
@@ -369,8 +380,13 @@ const rangeOptions: RangeKey[] = ['today', 'week', 'fortnight', 'month']
   transition: width 0.25s var(--ease);
 }
 
-.bar__part--booked {
+.bar__part--confirmed {
   background: var(--teal-600);
+}
+
+.bar__part--requested {
+  background: var(--caution-fg);
+  opacity: 0.75;
 }
 
 .bar__part--held {

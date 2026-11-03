@@ -2,9 +2,9 @@
 import { computed } from 'vue'
 import {
   AlertCircle, ArrowLeft, ArrowRight, Ban, BarChart3, CalendarDays, CalendarClock, Check, CheckCircle2,
-  ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock, Download, Globe, Info,
-  LayoutList, LogIn, MapPin, Menu, MessageSquare, Phone, Repeat, RotateCcw, Search,
-  Stethoscope, Users, UserRound, X
+  ChevronDown, ChevronLeft, ChevronRight, ClipboardList, Clock, Database, Download, Globe, Inbox,
+  DoorOpen, Info, LayoutList, LogIn, MapPin, Menu, MessageSquare, Minus, Phone, Printer, Repeat,
+  RotateCcw, Search, Stethoscope, Upload, Users, UserRound, X
 } from 'lucide-vue-next'
 
 /** One entry point for icons, so the set stays coherent. Lucide only — never emoji. */
@@ -23,7 +23,12 @@ const registry = {
   'chevron-right': ChevronRight,
   clipboard: ClipboardList,
   clock: Clock,
+  database: Database,
+  'door-open': DoorOpen,
   download: Download,
+  inbox: Inbox,
+  minus: Minus,
+  upload: Upload,
   globe: Globe,
   info: Info,
   list: LayoutList,
@@ -32,6 +37,7 @@ const registry = {
   menu: Menu,
   message: MessageSquare,
   phone: Phone,
+  printer: Printer,
   repeat: Repeat,
   reset: RotateCcw,
   search: Search,

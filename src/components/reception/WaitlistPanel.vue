@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { locations } from '@/data/locations'
-import { providerById } from '@/data/providers'
 import { serviceById, services } from '@/data/services'
 import { localized } from '@/i18n'
 import { formatWallDate, formatWallTime } from '@/services/clinicTime'
@@ -78,7 +77,6 @@ const slotMeta = (opening: Opening): string => {
   const slot = opening.slot
   return [
     localized(serviceById(slot.serviceId)?.name),
-    providerById(slot.providerId)?.name,
     localized(locations.find((location) => location.id === slot.locationId)?.name)
   ]
     .filter(Boolean)
@@ -404,16 +402,6 @@ const withdraw = async (): Promise<void> => {
                 <div>
                   <dt>{{ t('waitlist.clinics') }}</dt>
                   <dd>{{ clinicsOf(selected) }}</dd>
-                </div>
-                <div>
-                  <dt>{{ t('waitlist.clinician') }}</dt>
-                  <dd>
-                    {{
-                      selected.preferences.providerId === 'any'
-                        ? t('waitlist.anyClinician')
-                        : providerById(selected.preferences.providerId)?.name
-                    }}
-                  </dd>
                 </div>
                 <div>
                   <dt>{{ t('waitlist.dates') }}</dt>

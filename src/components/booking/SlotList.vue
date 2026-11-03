@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { providerById } from '@/data/providers'
 import { locationById } from '@/data/locations'
 import { localized } from '@/i18n'
 import { formatWallTime, minutesOf } from '@/services/clinicTime'
@@ -32,11 +31,8 @@ const groups = computed(() => {
   return buckets.filter((bucket) => bucket.slots.length > 0)
 })
 
-const whoFor = (slot: Slot): string => {
-  const provider = providerById(slot.providerId)?.name ?? ''
-  const location = localized(locationById(slot.locationId)?.name)
-  return [provider, location].filter(Boolean).join(' · ')
-}
+/** Which clinic the time is at. Shown only when the patient left the clinic open. */
+const whoFor = (slot: Slot): string => localized(locationById(slot.locationId)?.name)
 
 const slotLabel = (slot: Slot): string =>
   props.showWho

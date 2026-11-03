@@ -2,7 +2,6 @@
 import { computed, nextTick, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { providerById } from '@/data/providers'
 import { useBookingStore } from '@/stores/booking'
 import { useScheduleStore } from '@/stores/schedule'
 import { BOOKING_STEPS } from '@/types'
@@ -38,20 +37,9 @@ const isLast = computed(() => index.value === BOOKING_STEPS.length - 1)
  * also implies a clinic, since a clinician only works at some of them.
  */
 const applyQuery = (): void => {
-  const { service, location, provider } = route.query
-  if (!service && !location && !provider) return
-
+  const { service, location } = route.query
+  if (!service && !location) return
   booking.applyPreset({ serviceId: service, locationId: location })
-
-  if (typeof provider === 'string') {
-    const match = providerById(provider)
-    if (match) {
-      if (!booking.draft.serviceId) booking.selectService(match.serviceIds[0])
-      if (!booking.draft.locationId) booking.selectLocation(match.locationIds[0])
-      booking.selectProvider(match.id)
-    }
-  }
-
   void router.replace({ name: 'book', params: { step: booking.furthestStep } })
 }
 
@@ -79,8 +67,8 @@ const back = (): void => {
   else void router.push({ name: 'home' })
 }
 
-const confirm = async (): Promise<void> => {
-  const appointment = await booking.confirm()
+const send = async (): Promise<void> => {
+  const appointment = await booking.submitRequest()
   if (!appointment) {
     // A lost slot sends the patient back to the calendar; a field problem stays put.
     if (booking.errorKey === 'booking.errors.slotTaken') go('when')
@@ -90,7 +78,7 @@ const confirm = async (): Promise<void> => {
   void router.push({ name: 'confirmation', params: { reference: appointment.reference } })
 }
 
-const attemptConfirm = (): void => {
+const attemptSend = (): void => {
   if (!booking.detailsValid) {
     booking.showErrors = true
     // Send the keyboard to the first field that needs fixing, not to the error summary.
@@ -101,7 +89,7 @@ const attemptConfirm = (): void => {
     })
     return
   }
-  void confirm()
+  void send()
 }
 
 const liveError = computed(() => (booking.errorKey ? t(booking.errorKey) : ''))
@@ -153,9 +141,9 @@ const reachable = (step: BookingStep): boolean => booking.canEnter(step)
             size="lg"
             icon-right="check"
             :loading="booking.submitting"
-            @click="attemptConfirm"
+            @click="attemptSend"
           >
-            {{ booking.submitting ? t('booking.details.confirming') : t('booking.details.confirm') }}
+            {{ booking.submitting ? t('booking.details.sending') : t('booking.details.send') }}
           </AppButton>
         </nav>
 

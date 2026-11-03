@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { doctor } from '@/data/doctor'
 import { locationById } from '@/data/locations'
-import { providerById } from '@/data/providers'
 import { localized } from '@/i18n'
 import { formatWallDate, formatWallTime, zoneAbbreviation } from '@/services/clinicTime'
 import { useBookingStore } from '@/stores/booking'
@@ -20,14 +20,22 @@ interface Row {
 
 const rows = computed<Row[]>(() => {
   const draft = booking.draft
-  const list: Row[] = []
+  // There is one doctor, so this is not a choice — it is stated, always, from the start.
+  const list: Row[] = [
+    {
+      key: 'doctor',
+      icon: 'stethoscope',
+      label: t('booking.summary.doctor'),
+      value: doctor.name
+    }
+  ]
 
   if (booking.service) {
     list.push({
       key: 'service',
       icon: booking.service.icon,
       label: t('booking.summary.service'),
-      value: `${localized(booking.service.name)} · ${t('common.minutes', { count: booking.service.durationMinutes })}`
+      value: localized(booking.service.name)
     })
   }
 
@@ -54,20 +62,6 @@ const rows = computed<Row[]>(() => {
     })
   }
 
-  if (draft.providerId) {
-    list.push({
-      key: 'provider',
-      icon: 'users',
-      label: t('booking.summary.provider'),
-      value:
-        draft.slot
-          ? providerById(draft.slot.providerId)?.name ?? ''
-          : draft.providerId === 'any'
-            ? t('booking.place.firstAvailable')
-            : providerById(draft.providerId)?.name ?? ''
-    })
-  }
-
   if (draft.slot) {
     list.push({
       key: 'when',
@@ -85,9 +79,7 @@ const rows = computed<Row[]>(() => {
   <aside class="sum" :aria-label="t('booking.summary.title')">
     <h2 class="sum__title">{{ t('booking.summary.title') }}</h2>
 
-    <p v-if="!rows.length" class="sum__empty">{{ t('booking.summary.empty') }}</p>
-
-    <dl v-else class="sum__rows">
+    <dl class="sum__rows">
       <div v-for="row in rows" :key="row.key" class="sum__row">
         <span class="sum__icon"><AppIcon :name="row.icon" :size="16" /></span>
         <div class="sum__text">
@@ -114,11 +106,6 @@ const rows = computed<Row[]>(() => {
 .sum__title {
   font-size: var(--text-lg);
   margin-bottom: var(--s4);
-}
-
-.sum__empty {
-  font-size: var(--text-sm);
-  color: var(--text-soft);
 }
 
 .sum__rows {
