@@ -1,0 +1,89 @@
+1
+00:00:01,559 --> 00:00:04,183
+Lorba Medical
+Tres clínicas, una sola agenda
+
+2
+00:00:05,086 --> 00:00:12,112
+Atención primaria, cerca de casa
+Tres clínicas de barrio, gestionadas como una
+
+3
+00:00:12,112 --> 00:00:18,131
+Atención en tres clínicas de barrio
+
+4
+00:00:19,846 --> 00:00:26,243
+Pedir cita
+Cuatro pasos breves
+
+5
+00:00:26,243 --> 00:00:35,195
+Una sola agenda para las tres clínicas
+«Cualquier sede» busca en todas a la vez
+
+6
+00:00:35,195 --> 00:00:44,816
+Disponibilidad real, de esa misma agenda
+
+7
+00:00:44,816 --> 00:00:47,111
+Datos del paciente
+Lo imprescindible: ni síntomas ni documentos
+
+8
+00:00:49,309 --> 00:00:53,822
+Confirmada al momento
+Referencia LM-ERYL
+
+9
+00:00:56,509 --> 00:01:02,867
+La misma cita, en recepción
+Una agenda compartida, no un segundo sistema
+
+10
+00:01:05,756 --> 00:01:10,739
+En otro punto del día, un paciente anula
+Ese hueco se perdería
+
+11
+00:01:10,739 --> 00:01:15,264
+El hueco libre pasa directo a la lista de espera
+
+12
+00:01:15,264 --> 00:01:21,278
+Solo los pacientes a quienes les encaja
+Primero quien más ha esperado, con el motivo
+
+13
+00:01:21,278 --> 00:01:26,737
+Recepción ofrece el horario
+Con el mensaje ya escrito, en su idioma
+
+14
+00:01:26,737 --> 00:01:31,389
+El horario queda reservado mientras decide
+Con un plazo visible para todos
+
+15
+00:01:31,389 --> 00:01:38,351
+El paciente acepta
+La agenda se actualiza al instante
+
+16
+00:01:38,351 --> 00:01:41,757
+El hueco queda cubierto
+La anulación sigue visible en el tablero
+
+17
+00:01:44,015 --> 00:01:51,541
+Una vista de las tres clínicas
+
+18
+00:01:51,541 --> 00:01:54,758
+Ocupación, tiempo reservado y tiempo libre, por clínica
+
+19
+00:01:55,564 --> 00:01:58,574
+Lorba Medical
+Demostración de producto con datos de ejemplo

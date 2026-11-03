@@ -10,7 +10,7 @@
  * Needs piper (see video/README.md); ffmpeg comes from the ffmpeg-static package.
  */
 import { execFile, spawn } from 'node:child_process'
-import { mkdir, readFile, rm } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { promisify } from 'node:util'
@@ -20,9 +20,15 @@ const run = promisify(execFile)
 
 const PIPER = process.env.PIPER ?? join(homedir(), '.cache/piper/dist/piper/piper')
 const VOICES = process.env.PIPER_VOICES ?? join(homedir(), '.cache/piper/voices')
-const WORK = 'video/.speech'
-const SILENT = 'video/lorba-medical-demo-1080p.webm'
-const OUT_MP4 = 'video/lorba-medical-demo-1080p.mp4'
+const VARIANT = process.env.VARIANT ?? 'commercial'
+const LOCALE = process.env.LOCALE ?? 'en'
+const TAG = LOCALE === 'en' ? VARIANT : `${VARIANT}-${LOCALE}`
+const WORK = `video/.speech-${TAG}`
+const SILENT = `video/lorba-medical-demo-${TAG}-1080p.webm`
+const OUT_MP4 = `video/lorba-medical-demo-${TAG}-1080p.mp4`
+const CUES = `video/cues.${TAG}.json`
+const SCRIPT = `video/narration.${TAG}.json`
+const DOC = `video/voice-over.${TAG}.md`
 
 /** piper reads its text on stdin and waits for ever if that pipe is left open. */
 const speak = (model, file, text) =>
@@ -45,8 +51,8 @@ const lengthOf = async (file) => {
 }
 
 const main = async () => {
-  const { length, cues } = JSON.parse(await readFile('video/cues.json', 'utf8'))
-  const script = JSON.parse(await readFile('video/narration.en.json', 'utf8'))
+  const { length, cues } = JSON.parse(await readFile(CUES, 'utf8'))
+  const script = JSON.parse(await readFile(SCRIPT, 'utf8'))
   if (script.lines.length !== cues.length) {
     throw new Error(`${script.lines.length} lines for ${cues.length} cues`)
   }
@@ -99,7 +105,29 @@ const main = async () => {
     OUT_MP4
   ])
 
+  // The script document is written from the cues and the lines together, so it can never
+  // claim something other than what is actually spoken.
+  const clock = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`
+  const body = cues
+    .map((cue, index) => {
+      const end = index + 1 < cues.length ? cues[index + 1].start : length
+      return `**${clock(cue.start)} — ${clock(end)}**  ·  *on screen: ${cue.text}*\n\n${script.lines[index]}`
+    })
+    .join('\n\n')
+  await writeFile(
+    DOC,
+    `# Dr. Lorba — ${TAG} cut, voice-over script\n\n` +
+      `Spoken in the film by Piper (${script.voice}). Timed against\n` +
+      `\`${OUT_MP4.split('/').pop()}\` (${clock(length)}). Each line sits on the caption it belongs to and\n` +
+      `was written to fit the gap before the next one; \`scripts/narrate.mjs\` refuses to build the\n` +
+      `film if a line overruns its beat.\n\n` +
+      `To change the wording, edit \`${SCRIPT.split('/').pop()}\` and re-run that script — this file is\n` +
+      `generated, so it cannot drift from what is actually spoken.\n\n---\n\n${body}\n`,
+    'utf8'
+  )
+
   console.log('\nnarrated:', OUT_MP4, `(${(await lengthOf(OUT_MP4)).toFixed(1)}s)`)
+  console.log('script:   ', DOC)
 }
 
 main().catch((error) => {

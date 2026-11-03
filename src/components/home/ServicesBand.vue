@@ -27,7 +27,7 @@ const { t } = useI18n()
               <span class="card__summary">{{ localized(service.summary) }}</span>
             </span>
             <span class="card__meta">
-              <span class="card__duration">{{ t('common.minutes', { count: service.durationMinutes }) }}</span>
+              <span class="card__duration">{{ t('home.services.ask') }}</span>
               <AppIcon name="arrow-right" :size="16" class="card__arrow" />
             </span>
           </RouterLink>

@@ -21,6 +21,15 @@ const placeholders = (value: unknown, prefix = ''): Record<string, string[]> => 
   )
 }
 
+const texts = (value: unknown, prefix = ''): Record<string, string> => {
+  if (typeof value === 'string') return { [prefix]: value }
+  if (typeof value !== 'object' || value === null) return {}
+  return Object.entries(value as Record<string, unknown>).reduce<Record<string, string>>(
+    (all, [key, child]) => ({ ...all, ...texts(child, prefix ? `${prefix}.${key}` : key) }),
+    {}
+  )
+}
+
 describe('translations', () => {
   it('has exactly the same keys in both languages', () => {
     const enKeys = flatten(en).sort()
@@ -34,6 +43,64 @@ describe('translations', () => {
     const esPlaceholders = placeholders(es)
     for (const [key, names] of Object.entries(enPlaceholders)) {
       expect({ key, names: esPlaceholders[key] }).toEqual({ key, names })
+    }
+  })
+
+  /**
+   * The practice assigns the clinician; the patient never picks one. It is easy to leave a
+   * sentence behind that still offers the choice, so the copy is checked as a whole.
+   */
+  it('never offers the patient a choice of clinician', () => {
+    const offers = [
+      /choose a clinician/i,
+      /pick a clinician/i,
+      /elegir profesional/i,
+      /elige profesional/i,
+      /first available/i,
+      /primero disponible/i,
+      /any clinician/i,
+      /cualquier profesional/i
+    ]
+    for (const messages of [en, es]) {
+      const strings = texts(messages)
+      for (const [key, value] of Object.entries(strings)) {
+        for (const offer of offers) {
+          expect({ key, offer: offer.source, value }).toEqual({
+            key,
+            offer: offer.source,
+            value: offer.test(value) ? `MUST NOT MATCH: ${value}` : value
+          })
+        }
+      }
+    }
+  })
+
+  /**
+   * There is one doctor and no practice brand. Both are easy to reintroduce by copying an
+   * old sentence, so the whole message tree is checked rather than the pages we remember.
+   */
+  it('names no practice brand and no second doctor', () => {
+    const banned = [
+      /lorba medical/i,
+      /our team/i,
+      /nuestro equipo/i,
+      /our (doctors|clinicians)/i,
+      /nuestros (médicos|profesionales)/i,
+      /network of (doctors|clinicians)/i,
+      /red de profesionales/i,
+      /choose a (specialist|doctor)/i,
+      /elige un (especialista|médico)/i
+    ]
+    for (const messages of [en, es]) {
+      for (const [key, value] of Object.entries(texts(messages))) {
+        for (const pattern of banned) {
+          expect({ key, pattern: pattern.source, value }).toEqual({
+            key,
+            pattern: pattern.source,
+            value: pattern.test(value) ? `MUST NOT MATCH: ${value}` : value
+          })
+        }
+      }
     }
   })
 

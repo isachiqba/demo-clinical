@@ -3,19 +3,13 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { demoAnchorKey } from '@/data/demoSchedule'
+import { scenarioIds } from '@/data/demoScenario'
 import { locations } from '@/data/locations'
-import { providers } from '@/data/providers'
 import { localized } from '@/i18n'
-import {
-  addDaysToKey,
-  dateKeyOf,
-  formatWallDate,
-  isPastWall,
-  todayKey
-} from '@/services/clinicTime'
+import { addDaysToKey, dateKeyOf, formatWallDate, todayKey } from '@/services/clinicTime'
 import { useScheduleStore } from '@/stores/schedule'
 import { APPOINTMENT_STATUSES } from '@/types'
-import type { Appointment } from '@/types'
+import type { Appointment, AppointmentStatus, CuremdTask, LocationId } from '@/types'
 import AppButton from '@/components/ui/AppButton.vue'
 import AppDialog from '@/components/ui/AppDialog.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -24,39 +18,45 @@ import LogoMark from '@/components/layout/LogoMark.vue'
 import AgendaBoard from '@/components/reception/AgendaBoard.vue'
 import AppointmentPanel from '@/components/reception/AppointmentPanel.vue'
 import AppointmentTable from '@/components/reception/AppointmentTable.vue'
+import CuremdDialog from '@/components/reception/CuremdDialog.vue'
+import ArrivalDialog from '@/components/reception/ArrivalDialog.vue'
+import CareSlip from '@/components/reception/CareSlip.vue'
+import ClinicFloor from '@/components/reception/ClinicFloor.vue'
+import CuremdInbox from '@/components/reception/CuremdInbox.vue'
 import OverviewPanel from '@/components/reception/OverviewPanel.vue'
 import RescheduleDialog from '@/components/reception/RescheduleDialog.vue'
 import WaitlistPanel from '@/components/reception/WaitlistPanel.vue'
-import { scenarioIds } from '@/data/demoScenario'
 
 /**
- * The front-desk view. It reads and writes the same schedule store as the public
- * booking flow, so anything booked on the website is here the moment it is confirmed.
+ * The front desk. It reads and writes the same records as the public site, and keeps the
+ * two states apart throughout: what the clinic has agreed with the patient, and what is
+ * still to be typed into CureMD by hand.
  */
 const { t, locale } = useI18n()
 const route = useRoute()
 const schedule = useScheduleStore()
 
-type Mode = 'overview' | 'agenda' | 'list' | 'waitlist'
+type Mode = 'overview' | 'curemd' | 'floor' | 'agenda' | 'list' | 'waitlist'
 
 const mode = ref<Mode>('overview')
-// Opens on the day the sample schedule sits on, so the agenda is never blank.
 const dateKey = ref(demoAnchorKey())
-const locationFilter = ref('')
-const providerFilter = ref('')
-const statusFilter = ref('')
+const locationFilter = ref<LocationId | ''>('')
+const statusFilter = ref<AppointmentStatus | ''>('')
 const query = ref('')
 
 const selectedId = ref<string | null>(null)
 const rescheduling = ref<Appointment | null>(null)
+const proposing = ref<Appointment | null>(null)
+const curemdTask = ref<CuremdTask | null>(null)
+const curemdAppointment = ref<Appointment | null>(null)
+
 const askReset = ref(false)
 const resetDone = ref(false)
 const scenarioLoaded = ref(false)
-const preparedMissing = ref(false)
+const scriptedMissing = ref(false)
 
 onMounted(async () => {
   await schedule.ensureLoaded()
-  // The confirmation page links here with ?ref=… so the booking opens straight away.
   const reference = route.query.ref
   if (typeof reference === 'string') {
     const match = schedule.byReference(reference)
@@ -70,29 +70,24 @@ onMounted(async () => {
 
 const matchesFilters = (appointment: Appointment): boolean => {
   if (locationFilter.value && appointment.locationId !== locationFilter.value) return false
-  if (providerFilter.value && appointment.providerId !== providerFilter.value) return false
   if (statusFilter.value && appointment.status !== statusFilter.value) return false
   if (query.value.trim()) {
     const needle = query.value.trim().toLowerCase()
-    const haystack = [
+    const hay = [
       appointment.patient.firstName,
       appointment.patient.lastName,
       appointment.reference,
+      appointment.curemd.reference ?? '',
       appointment.patient.email
     ]
       .join(' ')
       .toLowerCase()
-    if (!haystack.includes(needle)) return false
+    if (!hay.includes(needle)) return false
   }
   return true
 }
 
-/** The day agenda is always one date; the list searches the whole schedule. */
-const dayAppointments = computed(() =>
-  schedule
-    .onDate(dateKey.value)
-    .filter(matchesFilters)
-)
+const dayAppointments = computed(() => schedule.onDate(dateKey.value).filter(matchesFilters))
 
 const listAppointments = computed(() => {
   const searching = query.value.trim().length > 0
@@ -100,38 +95,29 @@ const listAppointments = computed(() => {
   return base.filter(matchesFilters).sort((a, b) => a.startWall.localeCompare(b.startWall))
 })
 
-const selected = computed(() =>
-  selectedId.value ? schedule.byId(selectedId.value) ?? null : null
+const selected = computed(() => (selectedId.value ? (schedule.byId(selectedId.value) ?? null) : null))
+
+const visibleClinics = computed<LocationId[]>(() =>
+  locationFilter.value ? [locationFilter.value] : locations.map((location) => location.id)
 )
 
-const stats = computed(() => {
+/** The day's headline figures, kept in the clinic's own terms. */
+const dayStats = computed(() => {
   const today = schedule.onDate(dateKey.value)
   return {
-    today: today.length,
-    upcoming: today.filter(
-      (appointment) =>
-        appointment.status !== 'cancelled' &&
-        appointment.status !== 'completed' &&
-        !isPastWall(appointment.startWall)
-    ).length,
-    cancelled: today.filter((appointment) => appointment.status === 'cancelled').length,
-    newPatients: today.filter(
-      (appointment) => appointment.patientType === 'new' && appointment.status !== 'cancelled'
-    ).length
+    total: today.filter((a) => a.status !== 'cancelled' && a.status !== 'unavailable').length,
+    requested: today.filter((a) => a.status === 'requested').length,
+    confirmed: today.filter((a) => a.status === 'confirmed' || a.status === 'arrived').length,
+    cancelled: today.filter((a) => a.status === 'cancelled').length
   }
 })
 
 const anyFilter = computed(
-  () =>
-    Boolean(locationFilter.value) ||
-    Boolean(providerFilter.value) ||
-    Boolean(statusFilter.value) ||
-    query.value.trim().length > 0
+  () => Boolean(locationFilter.value) || Boolean(statusFilter.value) || query.value.trim().length > 0
 )
 
 const clearFilters = (): void => {
   locationFilter.value = ''
-  providerFilter.value = ''
   statusFilter.value = ''
   query.value = ''
 }
@@ -144,42 +130,89 @@ const openAppointment = (appointment: Appointment): void => {
   selectedId.value = appointment.id
 }
 
-const onMoved = (appointment: Appointment): void => {
-  rescheduling.value = null
+const openFromInbox = (appointment: Appointment): void => {
+  mode.value = 'agenda'
+  clearFilters()
   dateKey.value = dateKeyOf(appointment.startWall)
   selectedId.value = appointment.id
 }
 
-/** Reception's own shortcuts for the demonstration, kept apart from its real actions. */
+// --- the patient is in the building --------------------------------------
+const arrivalFor = ref<Appointment | null>(null)
+const slipFor = ref<Appointment | null>(null)
+
+const openArrival = (appointment: Appointment): void => {
+  arrivalFor.value = appointment
+}
+
+/** After checking in, show them on the clinic floor. */
+const afterArrival = (appointment: Appointment): void => {
+  arrivalFor.value = null
+  selectedId.value = appointment.id
+  mode.value = 'floor'
+}
+
+/** "Print the slip" straight from the arrival dialog: close it, open the sheet. */
+const printAfterArrival = (appointment: Appointment): void => {
+  arrivalFor.value = null
+  mode.value = 'floor'
+  slipFor.value = appointment
+}
+
+const openSlip = (appointment: Appointment): void => {
+  slipFor.value = appointment
+}
+
+/** The slip must always show what is true now, not what was true when it opened. */
+const liveSlip = computed(() =>
+  slipFor.value ? (schedule.byId(slipFor.value.id) ?? slipFor.value) : null
+)
+
+const startCuremd = (payload: { task: CuremdTask; appointment: Appointment }): void => {
+  curemdTask.value = payload.task
+  curemdAppointment.value = payload.appointment
+}
+
+const closeCuremd = (): void => {
+  curemdTask.value = null
+  curemdAppointment.value = null
+}
+
+/** Keep the dialog pointed at the live record while it is open. */
+const curemdLive = computed(() =>
+  curemdAppointment.value ? (schedule.byId(curemdAppointment.value.id) ?? null) : null
+)
+
+const onMoved = (appointment: Appointment): void => {
+  rescheduling.value = null
+  selectedId.value = appointment.id
+}
+
+const onProposed = (appointment: Appointment): void => {
+  proposing.value = null
+  selectedId.value = appointment.id
+}
+
+// --- demo controls -----------------------------------------------------------
+
 const loadScenario = async (): Promise<void> => {
   await schedule.loadScenario()
   scenarioLoaded.value = true
   window.setTimeout(() => (scenarioLoaded.value = false), 4000)
 }
 
-const openPreparedAppointment = (): void => {
-  const prepared = schedule.byId(scenarioIds.openingAppointment)
-  if (!prepared) {
-    preparedMissing.value = true
-    window.setTimeout(() => (preparedMissing.value = false), 4000)
+const openScripted = (id: string, target: Mode = 'agenda'): void => {
+  const appointment = schedule.byId(id)
+  if (!appointment) {
+    scriptedMissing.value = true
+    window.setTimeout(() => (scriptedMissing.value = false), 4000)
     return
   }
-  mode.value = 'agenda'
+  mode.value = target
   clearFilters()
-  dateKey.value = dateKeyOf(prepared.startWall)
-  selectedId.value = prepared.id
+  dateKey.value = dateKeyOf(appointment.startWall)
+  selectedId.value = appointment.id
 }
-
-const openAgendaFor = (payload: { locationId: Appointment['locationId']; dateKey: string }): void => {
-  mode.value = 'agenda'
-  locationFilter.value = payload.locationId
-  dateKey.value = payload.dateKey
-  selectedId.value = null
-}
-
-/** Slots waiting to be filled, and how many waiting patients they suit between them. */
-const openingsWaiting = computed(() => schedule.openOpenings.length)
-const matchesWaiting = computed(() => schedule.totalMatches)
 
 const confirmReset = async (): Promise<void> => {
   await schedule.resetDemoData()
@@ -192,6 +225,13 @@ const confirmReset = async (): Promise<void> => {
   window.setTimeout(() => (resetDone.value = false), 4000)
 }
 
+const openAgendaFor = (payload: { locationId: LocationId; dateKey: string }): void => {
+  mode.value = 'agenda'
+  locationFilter.value = payload.locationId
+  dateKey.value = payload.dateKey
+  selectedId.value = null
+}
+
 const dateLabel = computed(() =>
   formatWallDate(dateKey.value, locale.value, {
     weekday: 'long',
@@ -201,12 +241,13 @@ const dateLabel = computed(() =>
   })
 )
 
-/** A deselected appointment can vanish from view after a filter change. */
-watch([locationFilter, providerFilter, statusFilter], () => {
+watch([locationFilter, statusFilter], () => {
   if (selected.value && !matchesFilters(selected.value)) selectedId.value = null
 })
 
-const statusOptions = APPOINTMENT_STATUSES
+const isAgendaMode = computed(() => mode.value === 'agenda' || mode.value === 'list')
+const openingsWaiting = computed(() => schedule.openOpenings.length)
+const matchesWaiting = computed(() => schedule.totalMatches)
 </script>
 
 <template>
@@ -228,6 +269,32 @@ const statusOptions = APPOINTMENT_STATUSES
         >
           <AppIcon name="chart" :size="17" />
           <span>{{ t('reception.nav.overview') }}</span>
+        </button>
+        <button
+          class="rec__tab"
+          type="button"
+          :class="{ 'rec__tab--on': mode === 'curemd' }"
+          :aria-pressed="mode === 'curemd'"
+          @click="mode = 'curemd'"
+        >
+          <AppIcon name="inbox" :size="17" />
+          <span>{{ t('reception.nav.curemd') }}</span>
+          <span v-if="schedule.taskCounts.total" class="rec__badge rec__badge--warn">
+            {{ schedule.taskCounts.total }}
+          </span>
+        </button>
+        <button
+          class="rec__tab"
+          type="button"
+          :class="{ 'rec__tab--on': mode === 'floor' }"
+          :aria-pressed="mode === 'floor'"
+          @click="mode = 'floor'"
+        >
+          <AppIcon name="door-open" :size="17" />
+          <span>{{ t('reception.nav.floor') }}</span>
+          <span v-if="schedule.inClinic.length" class="rec__badge">
+            {{ schedule.inClinic.length }}
+          </span>
         </button>
         <button
           class="rec__tab"
@@ -269,16 +336,34 @@ const statusOptions = APPOINTMENT_STATUSES
           <AppButton variant="secondary" size="sm" icon-left="download" block @click="loadScenario">
             {{ t('reception.demo.load') }}
           </AppButton>
-          <AppButton variant="secondary" size="sm" icon-left="calendar-clock" block @click="openPreparedAppointment">
-            {{ t('reception.demo.openPrepared') }}
+          <AppButton
+            variant="secondary"
+            size="sm"
+            icon-left="upload"
+            block
+            @click="openScripted(scenarioIds.pendingRegistration)"
+          >
+            {{ t('reception.demo.openRequest') }}
+          </AppButton>
+          <AppButton
+            variant="secondary"
+            size="sm"
+            icon-left="ban"
+            block
+            @click="openScripted(scenarioIds.cancellationPending)"
+          >
+            {{ t('reception.demo.openCancellation') }}
           </AppButton>
           <AppButton variant="secondary" size="sm" icon-left="reset" block @click="askReset = true">
             {{ t('demo.reset') }}
           </AppButton>
-          <p v-if="scenarioLoaded" class="rec__reset-done" role="status">{{ t('reception.demo.loaded') }}</p>
-          <p v-if="preparedMissing" class="rec__reset-done" role="status">{{ t('reception.demo.preparedMissing') }}</p>
-          <p v-if="resetDone" class="rec__reset-done" role="status">{{ t('demo.resetDone') }}</p>
+          <p v-if="scenarioLoaded" class="rec__done" role="status">{{ t('reception.demo.loaded') }}</p>
+          <p v-if="scriptedMissing" class="rec__done" role="status">
+            {{ t('reception.demo.missing') }}
+          </p>
+          <p v-if="resetDone" class="rec__done" role="status">{{ t('demo.resetDone') }}</p>
         </section>
+
         <AppButton variant="quiet" size="sm" icon-left="arrow-left" :to="{ name: 'home' }" block>
           {{ t('nav.backToSite') }}
         </AppButton>
@@ -290,14 +375,19 @@ const statusOptions = APPOINTMENT_STATUSES
       <header class="rec__top">
         <div class="rec__titles">
           <h1 class="rec__title">{{ t('reception.title') }}</h1>
-          <p v-if="mode === 'agenda' || mode === 'list'" class="rec__date">{{ dateLabel }}</p>
+          <p v-if="isAgendaMode" class="rec__date">{{ dateLabel }}</p>
         </div>
 
-        <div v-if="mode === 'agenda' || mode === 'list'" class="rec__datenav">
+        <div v-if="isAgendaMode" class="rec__datenav">
           <button class="rec__step" type="button" aria-label="−1" @click="shiftDay(-1)">
             <AppIcon name="chevron-left" :size="17" />
           </button>
-          <input v-model="dateKey" class="rec__dateinput" type="date" :aria-label="t('reception.filters.date')" />
+          <input
+            v-model="dateKey"
+            class="rec__dateinput"
+            type="date"
+            :aria-label="t('reception.filters.date')"
+          />
           <button class="rec__step" type="button" aria-label="+1" @click="shiftDay(1)">
             <AppIcon name="chevron-right" :size="17" />
           </button>
@@ -312,136 +402,175 @@ const statusOptions = APPOINTMENT_STATUSES
         <span>{{ t('reception.notice') }}</span>
       </p>
 
-      <OverviewPanel v-if="mode === 'overview'" class="panel" @open-agenda="openAgendaFor" />
+      <OverviewPanel v-if="mode === 'overview'" class="tabpanel" @open-agenda="openAgendaFor" />
 
-      <WaitlistPanel v-else-if="mode === 'waitlist'" class="panel" />
+      <CuremdInbox
+        v-else-if="mode === 'curemd'"
+        class="tabpanel"
+        @act="startCuremd"
+        @open="openFromInbox"
+      />
+
+      <ClinicFloor
+        v-else-if="mode === 'floor'"
+        class="tabpanel"
+        @open="openFromInbox"
+        @print="openSlip"
+      />
+
+      <WaitlistPanel v-else-if="mode === 'waitlist'" class="tabpanel" />
 
       <template v-else>
-      <p v-if="openingsWaiting" class="rec__opening" role="status">
-        <AppIcon name="alert-circle" :size="17" />
-        <span>
-          {{ t('reception.waitlist.openings.banner') }} ·
-          {{ t('reception.waitlist.openings.matches', { count: matchesWaiting }, matchesWaiting) }}
-        </span>
-        <AppButton size="sm" variant="secondary" @click="mode = 'waitlist'">
-          {{ t('reception.waitlist.openings.bannerAction') }}
-        </AppButton>
-      </p>
+        <p v-if="openingsWaiting" class="rec__opening" role="status">
+          <AppIcon name="alert-circle" :size="17" />
+          <span>
+            {{ t('reception.waitlist.openings.banner') }} ·
+            {{ t('reception.waitlist.openings.matches', { count: matchesWaiting }, matchesWaiting) }}
+          </span>
+          <AppButton size="sm" variant="secondary" @click="mode = 'waitlist'">
+            {{ t('reception.waitlist.openings.bannerAction') }}
+          </AppButton>
+        </p>
 
-      <ul class="tiles">
-        <li class="tile">
-          <span class="tile__value">{{ stats.today }}</span>
-          <span class="tile__label">{{ t('reception.stats.today') }}</span>
-        </li>
-        <li class="tile">
-          <span class="tile__value">{{ stats.upcoming }}</span>
-          <span class="tile__label">{{ t('reception.stats.upcoming') }}</span>
-        </li>
-        <li class="tile">
-          <span class="tile__value">{{ stats.cancelled }}</span>
-          <span class="tile__label">{{ t('reception.stats.cancelled') }}</span>
-        </li>
-        <li class="tile">
-          <span class="tile__value">{{ stats.newPatients }}</span>
-          <span class="tile__label">{{ t('reception.stats.newPatients') }}</span>
-        </li>
-      </ul>
+        <ul class="tiles">
+          <li class="tile">
+            <span class="tile__value">{{ dayStats.total }}</span>
+            <span class="tile__label">{{ t('reception.stats.today') }}</span>
+          </li>
+          <li class="tile">
+            <span class="tile__value">{{ dayStats.requested }}</span>
+            <span class="tile__label">{{ t('reception.stats.requested') }}</span>
+          </li>
+          <li class="tile">
+            <span class="tile__value">{{ dayStats.confirmed }}</span>
+            <span class="tile__label">{{ t('reception.stats.confirmed') }}</span>
+          </li>
+          <li class="tile">
+            <span class="tile__value">{{ dayStats.cancelled }}</span>
+            <span class="tile__label">{{ t('reception.stats.cancelled') }}</span>
+          </li>
+        </ul>
 
-      <section v-if="mode === 'agenda' || mode === 'list'" class="bar" :aria-label="t('reception.filters.title')">
-        <label class="bar__search">
-          <AppIcon name="search" :size="17" />
-          <span class="sr-only">{{ t('reception.filters.search') }}</span>
-          <input v-model="query" type="search" :placeholder="t('reception.filters.searchPlaceholder')" />
-        </label>
+        <section class="bar" :aria-label="t('reception.filters.title')">
+          <label class="bar__search">
+            <AppIcon name="search" :size="17" />
+            <span class="sr-only">{{ t('reception.filters.search') }}</span>
+            <input v-model="query" type="search" :placeholder="t('reception.filters.searchPlaceholder')" />
+          </label>
 
-        <label class="bar__field">
-          <span class="sr-only">{{ t('reception.filters.location') }}</span>
-          <select v-model="locationFilter">
-            <option value="">{{ t('reception.filters.allLocations') }}</option>
-            <option v-for="location in locations" :key="location.id" :value="location.id">
-              {{ localized(location.name) }}
-            </option>
-          </select>
-        </label>
+          <label class="bar__field">
+            <span class="sr-only">{{ t('reception.filters.location') }}</span>
+            <select v-model="locationFilter">
+              <option value="">{{ t('reception.filters.allLocations') }}</option>
+              <option v-for="location in locations" :key="location.id" :value="location.id">
+                {{ localized(location.name) }}
+              </option>
+            </select>
+          </label>
 
-        <label class="bar__field">
-          <span class="sr-only">{{ t('reception.filters.provider') }}</span>
-          <select v-model="providerFilter">
-            <option value="">{{ t('reception.filters.allProviders') }}</option>
-            <option v-for="provider in providers" :key="provider.id" :value="provider.id">
-              {{ provider.name }}
-            </option>
-          </select>
-        </label>
+          <label class="bar__field">
+            <span class="sr-only">{{ t('reception.filters.status') }}</span>
+            <select v-model="statusFilter">
+              <option value="">{{ t('reception.filters.allStatuses') }}</option>
+              <option v-for="status in APPOINTMENT_STATUSES" :key="status" :value="status">
+                {{ t(`reception.status.${status}`) }}
+              </option>
+            </select>
+          </label>
 
-        <label class="bar__field">
-          <span class="sr-only">{{ t('reception.filters.status') }}</span>
-          <select v-model="statusFilter">
-            <option value="">{{ t('reception.filters.allStatuses') }}</option>
-            <option v-for="status in statusOptions" :key="status" :value="status">
-              {{ t(`reception.status.${status}`) }}
-            </option>
-          </select>
-        </label>
+          <AppButton v-if="anyFilter" variant="quiet" size="sm" icon-left="x" @click="clearFilters">
+            {{ t('reception.filters.clear') }}
+          </AppButton>
+        </section>
 
-        <AppButton v-if="anyFilter" variant="quiet" size="sm" icon-left="x" @click="clearFilters">
-          {{ t('reception.filters.clear') }}
-        </AppButton>
-      </section>
+        <div class="work" :class="{ 'work--panel': Boolean(selected) }">
+          <div class="work__board">
+            <template v-if="mode === 'agenda'">
+              <AgendaBoard
+                v-if="dayAppointments.length"
+                class="only-wide"
+                :appointments="dayAppointments"
+                :selected-id="selectedId"
+                :location-ids="visibleClinics"
+                :date-key="dateKey"
+                @open="openAppointment"
+              />
+              <AppointmentTable
+                v-if="dayAppointments.length"
+                class="only-narrow"
+                :appointments="dayAppointments"
+                :selected-id="selectedId"
+                @open="openAppointment"
+                @arrival="openArrival"
+              />
+              <p v-if="!dayAppointments.length" class="empty">
+                <span>{{ anyFilter ? t('reception.agenda.emptyFiltered') : t('reception.agenda.empty') }}</span>
+                <span class="empty__hint">{{ t('reception.agenda.emptyHint') }}</span>
+              </p>
+            </template>
 
-      <div class="work" :class="{ 'work--panel': Boolean(selected) }">
-        <div class="work__board">
-          <template v-if="mode === 'agenda'">
-            <AgendaBoard
-              v-if="dayAppointments.length"
-              class="only-wide"
-              :appointments="dayAppointments"
-              :selected-id="selectedId"
-              @open="openAppointment"
-            />
-            <AppointmentTable
-              v-if="dayAppointments.length"
-              class="only-narrow"
-              :appointments="dayAppointments"
-              :selected-id="selectedId"
-              @open="openAppointment"
-            />
-            <p v-if="!dayAppointments.length" class="empty">
-              <span>{{ anyFilter ? t('reception.agenda.emptyFiltered') : t('reception.agenda.empty') }}</span>
-              <span class="empty__hint">{{ t('reception.agenda.emptyHint') }}</span>
-            </p>
-          </template>
+            <template v-else>
+              <AppointmentTable
+                v-if="listAppointments.length"
+                :appointments="listAppointments"
+                :selected-id="selectedId"
+                show-date
+                @open="openAppointment"
+                @arrival="openArrival"
+              />
+              <p v-else class="empty">
+                <span>{{ t('reception.list.empty') }}</span>
+                <span class="empty__hint">{{ t('reception.agenda.emptyHint') }}</span>
+              </p>
+            </template>
+          </div>
 
-          <template v-else>
-            <AppointmentTable
-              v-if="listAppointments.length"
-              :appointments="listAppointments"
-              :selected-id="selectedId"
-              show-date
-              @open="openAppointment"
-            />
-            <p v-else class="empty">
-              <span>{{ t('reception.list.empty') }}</span>
-              <span class="empty__hint">{{ t('reception.agenda.emptyHint') }}</span>
-            </p>
-          </template>
+          <AppointmentPanel
+            class="work__panel"
+            :appointment="selected"
+            @close="selectedId = null"
+            @reschedule="rescheduling = $event"
+            @propose="proposing = $event"
+            @curemd="startCuremd"
+            @arrival="openArrival"
+            @slip="openSlip"
+          />
         </div>
-
-        <AppointmentPanel
-          class="work__panel"
-          :appointment="selected"
-          @close="selectedId = null"
-          @reschedule="rescheduling = $event"
-        />
-      </div>
       </template>
     </div>
 
     <RescheduleDialog
       :open="Boolean(rescheduling)"
       :appointment="rescheduling"
+      mode="reschedule"
       @close="rescheduling = null"
       @moved="onMoved"
+    />
+
+    <RescheduleDialog
+      :open="Boolean(proposing)"
+      :appointment="proposing"
+      mode="propose"
+      @close="proposing = null"
+      @moved="onProposed"
+    />
+
+    <ArrivalDialog
+      :open="arrivalFor !== null"
+      :appointment="arrivalFor"
+      @close="arrivalFor = null"
+      @arrived="afterArrival"
+      @print="printAfterArrival"
+    />
+
+    <CareSlip :open="slipFor !== null" :appointment="liveSlip" @close="slipFor = null" />
+
+    <CuremdDialog
+      :open="Boolean(curemdTask && curemdLive)"
+      :task="curemdTask"
+      :appointment="curemdLive"
+      @close="closeCuremd"
+      @done="closeCuremd"
     />
 
     <AppDialog
@@ -469,18 +598,17 @@ const statusOptions = APPOINTMENT_STATUSES
   background: var(--paper);
 }
 
-/* Rail ------------------------------------------------------------------- */
-
 .rec__rail {
   display: flex;
   flex-direction: column;
   gap: var(--s5);
-  min-width: 0;
   padding: var(--s5) var(--s4);
   background: var(--navy-900);
   position: sticky;
   top: 0;
   height: 100vh;
+  min-width: 0;
+  overflow-y: auto;
 }
 
 .rec__brand {
@@ -488,14 +616,12 @@ const statusOptions = APPOINTMENT_STATUSES
 }
 
 .rec__brand :deep(.logo__name),
-.rec__brand :deep(.logo__suffix) {
+.rec__brand :deep(.logo__suffix),
+.rec__brand :deep(.logo__mark) {
   color: #fff;
 }
 
-.rec__brand :deep(.logo__suffix) {
-  color: var(--teal-200);
-}
-
+.rec__brand :deep(.logo__suffix),
 .rec__brand :deep(.logo__mark) {
   color: var(--teal-200);
 }
@@ -543,6 +669,23 @@ const statusOptions = APPOINTMENT_STATUSES
   font-weight: 600;
 }
 
+.rec__badge {
+  margin-left: auto;
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--teal-200);
+  color: var(--teal-800);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  text-align: center;
+}
+
+.rec__badge--warn {
+  background: var(--caution-fg);
+  color: #fff;
+}
+
 .rec__rail-end {
   display: flex;
   flex-direction: column;
@@ -559,12 +702,37 @@ const statusOptions = APPOINTMENT_STATUSES
   justify-content: flex-start;
 }
 
-.rec__reset-done {
+.rec__demo {
+  width: 100%;
+  min-width: 0;
+  padding: var(--s3);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.rec__demo-title {
+  font-family: var(--font-sans);
   font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--teal-200);
 }
 
-/* Work area -------------------------------------------------------------- */
+.rec__demo-note {
+  margin-bottom: var(--s1);
+  font-size: var(--text-2xs);
+  line-height: 1.4;
+  color: var(--navy-400);
+}
+
+.rec__done {
+  font-size: var(--text-2xs);
+  color: var(--teal-200);
+}
 
 .rec__main {
   padding: var(--s6) var(--s6) var(--s8);
@@ -623,45 +791,28 @@ const statusOptions = APPOINTMENT_STATUSES
   font-size: var(--text-sm);
 }
 
-.rec__badge {
-  margin-left: auto;
-  min-width: 20px;
-  padding: 0 6px;
-  border-radius: var(--radius-pill);
-  background: var(--teal-200);
-  color: var(--teal-800);
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  text-align: center;
-}
-
-.rec__demo {
-  width: 100%;
-  padding: var(--s3);
-  border: 1px dashed rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-sm);
+.rec__notice {
   display: flex;
-  flex-direction: column;
+  align-items: flex-start;
   gap: var(--s2);
+  margin-top: var(--s5);
+  padding: var(--s3) var(--s4);
+  border-radius: var(--radius-sm);
+  background: var(--caution-bg);
+  color: var(--caution-fg);
+  font-size: var(--text-xs);
+  line-height: 1.5;
 }
 
-.rec__demo-title {
-  font-family: var(--font-sans);
-  font-size: var(--text-2xs);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--teal-200);
-}
-
-.rec__demo-note {
-  font-size: var(--text-2xs);
-  line-height: 1.4;
-  color: var(--navy-400);
-  margin-bottom: var(--s1);
-}
-
-.panel {
+/*
+ * The body of a tab — the overview, the inbox, the clinic list.
+ *
+ * Deliberately not called `.panel`: the appointment record calls its own root that, and a
+ * parent's scoped styles also land on a child component's root element, so the two names
+ * collided and this rule was quietly overriding the record's `display: flex` — which is
+ * what stopped it scrolling and spilled it out of its own box.
+ */
+.tabpanel {
   display: block;
   margin-top: var(--s6);
 }
@@ -679,23 +830,6 @@ const statusOptions = APPOINTMENT_STATUSES
   color: var(--teal-800);
   font-size: var(--text-sm);
   font-weight: 500;
-}
-
-.rec__notice {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--s2);
-  margin-top: var(--s5);
-  padding: var(--s3) var(--s4);
-  border-radius: var(--radius-sm);
-  background: var(--caution-bg);
-  color: var(--caution-fg);
-  font-size: var(--text-xs);
-  line-height: 1.5;
-}
-
-.rec__notice svg {
-  margin-top: 2px;
 }
 
 .tiles {
@@ -781,8 +915,6 @@ const statusOptions = APPOINTMENT_STATUSES
 
 .work {
   display: grid;
-  /* The panel column only exists when an appointment is open, so a closed panel
-     does not leave a 320px hole beside the agenda. */
   grid-template-columns: minmax(0, 1fr);
   gap: var(--s4);
   margin-top: var(--s5);
@@ -790,7 +922,7 @@ const statusOptions = APPOINTMENT_STATUSES
 }
 
 .work--panel {
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) 340px;
 }
 
 .work__board {
@@ -835,7 +967,6 @@ const statusOptions = APPOINTMENT_STATUSES
 
 @media (max-width: 860px) {
   .rec {
-    /* minmax(0, …) so a wide child cannot push the column past the viewport. */
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -877,17 +1008,9 @@ const statusOptions = APPOINTMENT_STATUSES
     min-width: 0;
   }
 
-  .rec__demo {
-    min-width: 0;
-  }
-
   .rec__demo :deep(.btn) {
     justify-content: center;
     text-align: center;
-  }
-
-  .rec__rail-end :deep(.btn) {
-    width: auto;
   }
 
   .rec__main {

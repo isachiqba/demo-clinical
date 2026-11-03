@@ -1,19 +1,19 @@
 export default {
   brand: {
-    name: 'Lorba Medical',
-    line: 'Medicina general en tres clínicas de barrio.'
+    name: 'Dr. Lorba',
+    line: 'Un solo médico. Tres clínicas de barrio.'
   },
 
   demo: {
     chip: 'Demo',
-    banner: 'Sitio de demostración. La clínica, los profesionales y todas las citas son inventados, y nada de lo que escribas se envía a ningún sitio.',
+    banner: 'Sitio de demostración. El médico, las clínicas y todas las citas son inventados, y nada de lo que escribas se envía a ningún sitio.',
     short: 'Datos ficticios de demostración.',
     reset: 'Restaurar datos de ejemplo',
     resetTitle: '¿Restaurar la demo a su estado inicial?',
     resetBody: 'Se descartan todas las reservas hechas en esta sesión y vuelve la agenda de ejemplo original.',
     resetConfirm: 'Sí, restaurar',
     resetDone: 'Datos de ejemplo restaurados.',
-    illustrative: 'Perfil de demostración · fotografía ilustrativa',
+    illustrative: 'Médico ficticio · fotografía ilustrativa',
     illustrativeShort: 'Fotografía ilustrativa'
   },
 
@@ -41,7 +41,7 @@ export default {
 
   nav: {
     care: 'Servicios',
-    team: 'Equipo',
+    team: 'Conozca al Dr. Lorba',
     locations: 'Sedes',
     info: 'Información',
     book: 'Pedir cita',
@@ -51,12 +51,14 @@ export default {
 
   home: {
     hero: {
-      title: 'Atención personal. Más cerca de ti.',
-      body: 'Lorba Medical es una consulta de medicina general con tres clínicas de barrio. Pide cita en la que mejor te venga, con un profesional que conserva tu historial de una visita a la siguiente.',
+      kicker: 'Medicina interna',
+      title: 'Bienvenido al consultorio del Dr. Lorba',
+      body: 'Encuentre atención cercana y personalizada en cualquiera de nuestras tres ubicaciones. Estamos aquí para escucharle, resolver sus dudas y acompañarle en el cuidado de su salud.',
       book: 'Pedir cita',
-      services: 'Ver qué atendemos',
-      languages: 'Atendemos en inglés y en español.',
-      imageAlt: 'Una profesional escuchando a un paciente al otro lado de la mesa de consulta.'
+      meet: 'Conocer al Dr. Lorba',
+      clinics: 'Downtown · Northside · Westside',
+      languages: 'Consultas en inglés y en español.',
+      imageAlt: 'Un médico escuchando a un paciente al otro lado de la mesa de consulta.'
     },
 
     quick: {
@@ -73,40 +75,13 @@ export default {
       kicker: 'Servicios',
       title: 'Qué puedes reservar',
       lede: 'Cuatro tipos de consulta, cada uno con la duración que le corresponde.',
-      more: 'Más sobre nuestra atención'
-    },
-
-    approach: {
-      kicker: 'Cómo trabajamos',
-      title: 'Consultas sin prisa, con el mismo profesional.',
-      imageAlt: 'Un profesional tomando notas en una carpeta durante una consulta.',
-      points: {
-        listening: {
-          title: 'Tiempo para explicarte',
-          body: 'La duración depende del tipo de consulta y no de una franja única, así que una conversación más larga no obliga a pedir otra cita.'
-        },
-        continuity: {
-          title: 'La misma cara',
-          body: 'Puedes seguir pidiendo cita con el profesional que ya te atiende. Y si prefieres que te vean antes, te damos el primer hueco con quien esté libre.'
-        },
-        convenience: {
-          title: 'Fácil de alcanzar',
-          body: 'Tres clínicas, entradas sin escalones y una reserva que terminas en un par de minutos sin crear ninguna cuenta.'
-        }
-      }
-    },
-
-    team: {
-      kicker: 'Equipo',
-      title: 'Quién te atendería',
-      lede: 'Tres perfiles de demostración. Los nombres son inventados y los retratos son ilustrativos.',
-      more: 'Conocer al equipo'
+      more: 'Más sobre cómo atiende'
     },
 
     locations: {
       kicker: 'Sedes',
-      title: 'Tres clínicas, una misma consulta',
-      lede: 'Reserves donde reserves, tu historial de citas va contigo.',
+      title: 'Su consulta, en tres ubicaciones',
+      lede: 'Vengas a la que vengas, es el mismo médico y las mismas notas.',
       more: 'Ver todas las sedes'
     },
 
@@ -118,34 +93,39 @@ export default {
     },
 
     closing: {
-      title: 'Reserva cuando te venga bien',
-      body: 'Elige el tipo de consulta, la sede y la primera hora que te sirva. Nada queda confirmado hasta que tú lo digas.',
+      title: 'Pide la hora que te venga bien',
+      body: 'Elige el tipo de consulta, la sede y la primera hora que te sirva. La clínica la confirma después.',
       action: 'Pedir cita'
     }
   },
 
   care: {
     title: 'Servicios',
-    lede: 'Lorba Medical es una consulta de medicina general. Estos son los cuatro tipos de cita que puedes reservar y para qué sirve cada uno.',
+    lede: 'Los tipos de consulta que atiende el Dr. Lorba, y para qué sirve cada uno.',
     duration: 'Duración habitual',
     book: 'Pedir esta cita',
-    notAdvice: 'Esta página describe los tipos de cita que ofrecemos. No es consejo médico y, en caso de urgencia, debes llamar al 911 en lugar de pedir cita por internet.'
+    notAdvice: 'Esta página describe los tipos de cita que se ofrecen. No es consejo médico y, en caso de urgencia, debes llamar al 911 en lugar de pedir cita por internet.'
   },
 
   team: {
-    title: 'Equipo',
-    lede: 'Tres profesionales que pasan consulta en las tres sedes. Son perfiles de demostración creados para este prototipo.',
+    title: 'Conozca al Dr. Lorba',
     speaks: 'Idiomas',
-    worksAt: 'Pasa consulta en',
-    offers: 'Atiende',
-    book: 'Pedir cita con {name}',
-    disclaimer: 'Estos perfiles son ficticios. Las fotografías son ilustrativas, proceden de un banco de imágenes y no muestran a las personas aquí nombradas, que no existen. No se atribuye ninguna titulación, colegiación ni afiliación.'
+    whereLabel: 'Pasa consulta en',
+    whereValue: 'Downtown, Northside y Westside',
+    hours: {
+      title: 'Horario de consulta',
+      lede: 'Dónde está cada día. Es el mismo horario del que salen las horas que se ofrecen, así que la web nunca puede darte una hora en la que él esté en otra clínica.',
+      off: 'No pasa consulta',
+      note: 'Una clínica puede estar abierta un día en que él no está. El horario de apertura de cada sede está en la página de sedes. Datos de demostración: este horario es inventado.'
+    },
+    disclaimer: 'El Dr. Lorba es un médico ficticio creado para esta demostración. La fotografía es ilustrativa, procede de un banco de imágenes y no le muestra a él, porque no existe. En esta web no se atribuye ninguna titulación, colegiación, certificación, años de experiencia ni afiliación hospitalaria.'
   },
 
   locations: {
     title: 'Sedes',
-    lede: 'Tres clínicas de la misma consulta. Los horarios de abajo son datos de demostración.',
-    hours: 'Horario',
+    hours: 'Horario de la clínica',
+    consulting: 'El Dr. Lorba atiende',
+    consultingNote: 'La clínica puede abrir a otras horas; estas son las horas en las que él está aquí.',
     closed: 'Cerrado',
     openNow: 'Abierto ahora',
     closedNow: 'Cerrado ahora',
@@ -166,7 +146,7 @@ export default {
     },
     call: 'Llamar a la sede',
     book: 'Pedir cita en esta sede',
-    addressNote: 'En esta demo no se indican direcciones postales, para que ninguna consulta real pueda confundirse con esta.',
+    addressNote: 'En esta demo no se indican direcciones postales ni teléfonos reales, para que ninguna consulta real pueda confundirse con esta.',
     days: {
       0: 'Domingo',
       1: 'Lunes',
@@ -201,13 +181,9 @@ export default {
           q: '¿Puedo cambiar o anular una cita?',
           a: 'Sí. La página de confirmación lleva una referencia y un enlace para anular. En esta demo también puedes abrir la vista de recepción y reprogramarla desde ahí.'
         },
-        who: {
-          q: '¿Me atenderá siempre el mismo profesional?',
-          a: 'Puedes elegir profesional al reservar y seguir eligiéndolo. Si prefieres que te vean antes, elige «El primero disponible» y te damos el hueco más próximo con cualquiera.'
-        },
         spanish: {
           q: '¿Pueden atenderme en español?',
-          a: 'Dos de los tres profesionales de esta demo trabajan en inglés y español, y cada perfil lo indica. Además, arriba puedes cambiar esta web al español.'
+          a: 'Sí. El Dr. Lorba atiende en inglés y en español. Además, arriba puedes cambiar esta web al español.'
         },
         timezone: {
           q: '¿En qué horario veo las citas?',
@@ -217,7 +193,7 @@ export default {
     },
     credits: {
       title: 'Créditos de las imágenes',
-      body: 'Las fotografías proceden de Unsplash y se usan bajo la licencia de Unsplash. Las personas que aparecen no son los profesionales ficticios nombrados en este sitio.',
+      body: 'Las fotografías proceden de Unsplash y se usan bajo la licencia de Unsplash. La persona que aparece no es el Dr. Lorba, que no existe.',
       photographer: 'Fotografía de {name}',
       view: 'Ver origen'
     }
@@ -228,17 +204,16 @@ export default {
     stepOf: 'Paso {current} de {total}',
     steps: {
       visit: 'Consulta',
-      place: 'Sede y profesional',
+      place: 'Sede',
       when: 'Día y hora',
       details: 'Tus datos'
     },
     summary: {
-      title: 'Tu reserva',
-      empty: 'Aquí irán apareciendo tus elecciones.',
+      title: 'Tu solicitud',
+      doctor: 'Médico',
       service: 'Consulta',
       patientType: 'Paciente',
       location: 'Sede',
-      provider: 'Profesional',
       when: 'Día y hora'
     },
 
@@ -254,46 +229,37 @@ export default {
     },
 
     place: {
-      title: '¿Dónde y con quién?',
-      lede: 'Solo se muestran profesionales que atienden {service}.',
+      title: '¿Dónde quieres que te atiendan?',
+      lede: 'Elige la sede para tu consulta de {service}.',
       clinic: 'Sede',
       anyLocation: 'Cualquier sede',
-      anyLocationHelp: 'Compara las tres y quédate con el hueco más próximo.',
-      clinician: 'Profesional',
-      firstAvailable: 'El primero disponible',
-      firstAvailableHelp: 'El hueco más próximo con cualquiera de nuestros profesionales.',
-      nextOpening: 'Próximo hueco: {when}',
-      noOpenings: 'Sin huecos en los próximos 60 días',
-      checking: 'Consultando disponibilidad…',
-      noProviders: 'Ningún profesional atiende esta consulta en esa sede. Prueba con otra sede o elige «Cualquier sede».',
-      atClinics: 'En {clinics}'
+      anyLocationHelp: 'Compara las tres y quédate con la hora más próxima.',
+      nextOpening: 'Primera hora libre: {when}',
+      noOpenings: 'Nada en los próximos 60 días',
+      checking: 'Consultando…'
     },
-
     when: {
       title: 'Elige día y hora',
-      ledeProvider: 'Huecos con {provider} en {location}.',
-      ledeAny: 'Huecos en {location}, con quien esté libre.',
+      lede: 'Horas libres en {location}, en franjas de diez minutos.',
       anyLocationLabel: 'cualquier sede',
-      firstAvailableLabel: 'el primer profesional disponible',
+      subjectToConfirmation: 'La fecha y hora seleccionadas están sujetas a confirmación de la clínica.',
       previousMonth: 'Mes anterior',
       nextMonth: 'Mes siguiente',
-      noneLabel: 'sin huecos',
-      someLabel: '{count} huecos',
+      noneLabel: 'nada libre',
+      someLabel: '{count} horas libres',
       morning: 'Mañana',
       afternoon: 'Tarde',
       evening: 'Última hora',
       loading: 'Consultando la agenda…',
-      chosen: 'Has elegido las {time} con {provider} en {location}.',
+      chosen: 'Has elegido las {time} en {location}.',
       empty: {
         title: 'Este día no queda nada libre',
         body: 'Prueba con alguna de estas opciones.',
-        nextDay: 'Próximo hueco · {when}',
-        anyProvider: 'Permitir cualquier profesional',
+        nextDay: 'Próxima hora libre · {when}',
         anyLocation: 'Permitir cualquier sede',
-        nothing: 'No hay huecos en los próximos 60 días con esta combinación. Prueba con otro tipo de consulta.'
+        nothing: 'No hay nada libre en los próximos 60 días con esta combinación. Prueba con otro tipo de consulta.'
       }
     },
-
     details: {
       title: 'Tus datos',
       lede: 'Solo lo necesario para guardarte la cita.',
@@ -312,9 +278,9 @@ export default {
       selfPay: 'Pago particular',
       selfPayHelp: 'Te diremos el importe antes de hacer nada.',
       noPolicy: 'No pedimos número de póliza, documento de identidad, fecha de nacimiento ni datos bancarios.',
-      review: 'Revisa tu reserva',
-      confirm: 'Confirmar la reserva',
-      confirming: 'Confirmando…'
+      review: 'Revisa tu solicitud',
+      send: 'Enviar solicitud',
+      sending: 'Enviando…'
     },
 
     errors: {
@@ -343,8 +309,6 @@ export default {
     simulated: 'Simulado: esta demo no envía ningún mensaje, correo ni SMS. En recepción puedes ver cómo sería la oferta.',
     service: 'Tipo de consulta',
     clinics: 'Sedes a las que irías',
-    clinician: 'Profesional',
-    anyClinician: 'Cualquiera disponible',
     dates: 'Entre estas fechas',
     from: 'Desde',
     to: 'Hasta',
@@ -384,57 +348,82 @@ export default {
   },
 
   confirmation: {
-    simulated: 'Reserva simulada',
-    title: 'Hora reservada.',
-    body: 'Esto es una demostración: la cita no existe y no te hemos enviado nada, ni correo ni SMS. En una consulta real, aquí es donde llegaría tu confirmación.',
-    reference: 'Referencia de la reserva',
+    state: {
+      requested: 'Solicitud recibida · pendiente de confirmación',
+      confirmed: 'Cita confirmada',
+      arrived: 'Ha llegado',
+      completed: 'Completada',
+      cancelled: 'Cancelada',
+      unavailable: 'No disponible'
+    },
+    headline: {
+      requested: 'Solicitud recibida.',
+      confirmed: 'Tu cita está confirmada.',
+      changePending: 'Se está gestionando un nuevo horario.',
+      cancellationPending: 'Se está tramitando tu cancelación.',
+      cancelled: 'Esta cita está cancelada.',
+      unavailable: 'No hemos podido darte esa hora.'
+    },
+    body: {
+      requested: 'La clínica revisará la disponibilidad y confirmará su cita. Hasta entonces esto es una solicitud, no una reserva.',
+      confirmed: 'La clínica ha confirmado esta cita y la ha registrado en su sistema.',
+      changePending: 'La clínica está cambiando tu cita. La hora de abajo sigue vigente hasta que confirmen la nueva.',
+      cancellationPending: 'La clínica está retirando esta cita de su sistema. No necesitas hacer nada más.',
+      cancelled: 'No hay ninguna cita reservada. Puedes pedir otra hora cuando quieras.',
+      unavailable: 'La clínica no pudo atender esa hora y no se acordó una alternativa. Puedes pedir otra.'
+    },
+    nothingSent: 'Esto es una demostración: no se envía ningún correo ni SMS en ningún momento.',
+    reference: 'Tu referencia',
     appointment: 'Consulta',
-    clinician: 'Profesional',
-    clinic: 'Sede',
+    requestedTime: 'Hora solicitada',
     when: 'Día y hora',
+    clinic: 'Sede',
     patient: 'Paciente',
     payment: 'Pago',
+    changeProposed: 'Nueva hora propuesta: {when}. No es tuya hasta que la clínica la confirme.',
     addToCalendar: 'Añadir al calendario (.ics)',
     calendarNote: 'El archivo de calendario va marcado como DEMO y usa la hora de las clínicas.',
-    manage: 'Anular esta reserva',
-    cancelTitle: '¿Anular esta reserva de prueba?',
-    cancelBody: '{service} el {when}. El hueco vuelve a la agenda inmediatamente.',
-    cancelConfirm: 'Sí, anularla',
-    cancelled: 'Esta reserva está anulada. El hueco vuelve a estar libre.',
+    calendarLater: 'El archivo de calendario se ofrece cuando la clínica confirma la cita.',
+    cancelRequest: 'Retirar esta solicitud',
+    cancelAppointment: 'Anular esta cita',
+    cancelRequestTitle: '¿Retirar esta solicitud?',
+    cancelTitle: '¿Anular esta cita?',
+    cancelRequestBody: '{service} el {when}. Todavía no hay nada reservado, así que no hay nada que deshacer.',
+    cancelBody: '{service} el {when}. La clínica la retirará de su sistema.',
+    cancelConfirm: 'Sí, adelante',
     bookAnother: 'Pedir otra cita',
-    openReception: 'Modificarla en la demo de recepción',
-    notFound: 'No encontramos ninguna reserva con esa referencia.',
+    openReception: 'Verla en la demo de recepción',
+    notFound: 'No encontramos nada con esa referencia.',
     notFoundBody: 'Puede que se haya restaurado la demo con los datos de ejemplo.'
   },
-
   reception: {
     title: 'Recepción',
     subtitle: 'Mostrador de demostración',
     notice: 'Vista de demostración. No hay inicio de sesión ni control de acceso real: cualquiera con este enlace ve la misma agenda inventada.',
     nav: {
       overview: 'Resumen',
+      curemd: 'Bandeja CureMD',
+      floor: 'Pacientes en clínica',
       agenda: 'Agenda del día',
       list: 'Listado',
       waitlist: 'Lista de espera',
       settings: 'Datos de la demo'
     },
     stats: {
-      today: 'Citas de este día',
-      upcoming: 'Pendientes',
-      cancelled: 'Anuladas',
-      newPatients: 'Primeras visitas'
+      today: 'En agenda este día',
+      requested: 'Solicitudes por revisar',
+      confirmed: 'Confirmadas',
+      cancelled: 'Canceladas'
     },
     filters: {
       title: 'Filtros',
       date: 'Fecha',
       location: 'Sede',
-      provider: 'Profesional',
       status: 'Estado',
       search: 'Buscar',
       searchPlaceholder: 'Nombre o referencia',
       clear: 'Quitar filtros',
       allLocations: 'Todas las sedes',
-      allProviders: 'Todos los profesionales',
       allStatuses: 'Todos los estados',
       today: 'Hoy'
     },
@@ -442,6 +431,7 @@ export default {
       empty: 'No hay nada reservado este día.',
       emptyFiltered: 'Ninguna cita coincide con estos filtros.',
       emptyHint: 'Quita los filtros o elige otra fecha.',
+      notHere: 'Hoy no pasa consulta aquí',
       free: 'Libre',
       column: '{name} · {location}'
     },
@@ -450,8 +440,7 @@ export default {
       when: 'Cuándo',
       patient: 'Paciente',
       appointment: 'Consulta',
-      clinician: 'Profesional',
-      clinic: 'Sede',
+        clinic: 'Sede',
       status: 'Estado',
       reference: 'Referencia'
     },
@@ -463,21 +452,35 @@ export default {
       contact: 'Contacto',
       noPhone: 'Sin teléfono',
       appointment: 'Consulta',
-      clinician: 'Profesional',
       clinic: 'Sede',
       when: 'Día y hora',
+      requestedTime: 'Hora solicitada',
       status: 'Estado',
-      booked: 'Reservada el {when}',
       actions: 'Acciones',
-      reschedule: 'Reprogramar',
+      history: 'Qué se ha declarado',
+      reschedule: 'Mover a otra hora',
+      proposeAlternative: 'Proponer otra hora',
+      proposed: 'Propuesto al paciente',
+      proposedBody: 'No cambia nada hasta que el paciente acepte. Aquí no hay un paciente que conteste, así que puedes contestar por él.',
+      simulateAccept: 'Simular que el paciente acepta',
+      markUnavailable: 'Cerrar como no disponible',
       cancel: 'Anular la cita',
+      bookAnother: 'Programar otra cita',
+      finishedNote: 'Esta visita ha terminado. El registro queda como está; cualquier cosa posterior es una cita nueva.',
       cancelTitle: '¿Anular esta cita?',
-      cancelBody: '{patient} · {service} · {when}. El hueco vuelve a la agenda inmediatamente.',
+      cancelBodyRequest: '{patient} · {when}. Todavía no hay nada en CureMD, así que el hueco se libera enseguida.',
+      cancelBodyRegistered: '{patient} · {when}. Sigue en agenda hasta que declares la cancelación en CureMD.',
       cancelConfirm: 'Sí, anularla',
       close: 'Cerrar el panel'
     },
+    propose: {
+      title: 'Proponer otra hora',
+      lede: 'Ofrece una hora al paciente. No se mueve nada hasta que la acepte, y mientras tanto el hueco queda retenido para que no lo tome otro.',
+      confirm: 'Proponer esta hora'
+    },
+
     reschedule: {
-      title: 'Reprogramar la cita',
+      title: 'Mover a otra hora',
       lede: 'Solo se ofrecen horas realmente libres, así que no puede crearse un solape.',
       current: 'Ahora mismo: {when}',
       noSlots: 'No hay horas libres este día.',
@@ -486,12 +489,166 @@ export default {
       failed: 'Esa hora se ocupó mientras el panel estaba abierto. Elige otra.'
     },
     status: {
+      requested: 'Solicitada',
       confirmed: 'Confirmada',
       arrived: 'Ha llegado',
       completed: 'Completada',
-      cancelled: 'Anulada',
-      change: 'Cambiar estado'
+      cancelled: 'Cancelada',
+      unavailable: 'No disponible'
     },
+    statusShort: 'Cita',
+
+    curemd: {
+      title: 'CureMD',
+      short: 'CureMD',
+      inbox: 'Pendientes de CureMD',
+      inboxLede: 'Trabajo que todavía hay que hacer a mano en CureMD. Esta aplicación nunca se comunica con él: esto son declaraciones de recepción, no una comprobación.',
+      nothingYet: 'Todavía no hay nada registrado allí',
+      currentTime: 'Horario actual registrado',
+      newTime: 'Nuevo horario pendiente',
+      currentlyRegistered: 'Ahora mismo figura como {when} en {clinic}.',
+      reference: 'Referencia CureMD',
+      declaredBy: 'Declarado por',
+      operation: 'Operación',
+      allOperations: 'Todas las operaciones',
+      appointmentDate: 'Cita',
+      searchPlaceholder: 'Nombre, referencia o referencia CureMD',
+      waiting: 'Pendiente desde hace {age}',
+      ageMinutes: '{count} min',
+      ageHours: '{count} h',
+      ageDays: '{count} días',
+      none: 'No hay nada pendiente en CureMD.',
+      noneFiltered: 'Nada coincide con estos filtros.',
+      noneHint: 'Aquí llegan las solicitudes nuevas, los cambios acordados y las cancelaciones de citas ya registradas.',
+      status: {
+        'pending-registration': 'Por registrar',
+        registered: 'Registrada',
+        'change-pending': 'Cambio pendiente',
+        'cancellation-pending': 'Cancelación pendiente',
+        cancelled: 'Cancelada allí',
+        'not-required': 'Nada que hacer'
+      },
+      task: {
+        registration: 'Por registrar',
+        change: 'Cambios por aplicar',
+        cancellation: 'Cancelaciones por hacer'
+      },
+      taskBody: {
+        registration: 'Consulta la disponibilidad en CureMD, registra allí la cita y después anótalo aquí.',
+        change: 'Cambia la cita en CureMD y después anótalo aquí. Hasta entonces el paciente conserva la hora anterior.',
+        cancellation: 'Retira la cita de CureMD y después anótalo aquí. Hasta entonces el hueco sigue ocupado.'
+      },
+      dialog: {
+        whatToEnter: 'Qué introducir en CureMD',
+        reference: 'Referencia CureMD',
+        referenceHint: 'Si CureMD te ha dado una, anótala aquí.',
+        note: 'Nota',
+        alsoConfirm: 'Confirmar también la cita, ya que queda registrada',
+        noData: 'Esto deja constancia de lo que has hecho a mano. No envía nada a CureMD.',
+        operator: 'Se registra como {name}, con la fecha y hora de la operación.',
+        changedUnderneath: 'Esta cita ha cambiado mientras el diálogo estaba abierto. Ciérralo y vuelve a revisarla antes de anotar nada.',
+        stale: 'La cita cambió mientras esto estaba abierto, así que no se ha anotado nada. Cierra y revísala de nuevo.',
+        failed: 'No se ha podido anotar. Revisa la cita e inténtalo otra vez.',
+        registration: {
+          title: 'Marcar como registrada en CureMD',
+          lede: 'Deja constancia de que has registrado esta cita en CureMD.',
+          confirm: 'He registrado esta cita en CureMD.',
+          action: 'Marcar como registrada'
+        },
+        change: {
+          title: 'Marcar cambio como aplicado en CureMD',
+          lede: 'Deja constancia de que has cambiado esta cita en CureMD.',
+          confirm: 'He cambiado esta cita en CureMD.',
+          action: 'Marcar cambio como aplicado'
+        },
+        cancellation: {
+          title: 'Marcar cancelación como realizada en CureMD',
+          lede: 'Deja constancia de que has retirado esta cita de CureMD.',
+          confirm: 'He cancelado esta cita en CureMD.',
+          action: 'Marcar cancelación como realizada'
+        }
+      }
+    },
+
+    audit: {
+      'request-created': 'Solicitud creada',
+      'appointment-confirmed': 'Cita confirmada',
+      'registration-declared': 'Declarada registrada en CureMD',
+      'change-requested': 'Cambio solicitado',
+      'change-applied': 'Cambio declarado aplicado en CureMD',
+      'change-abandoned': 'Cambio descartado',
+      'cancellation-requested': 'Cancelación solicitada',
+      'cancellation-completed': 'Cancelación declarada realizada',
+      'marked-unavailable': 'Cerrada como no disponible',
+      'alternative-proposed': 'Alternativa propuesta',
+      'alternative-accepted': 'Alternativa aceptada',
+      'note-added': 'Nota añadida',
+      'offer-sent': 'Oferta de lista de espera enviada',
+      'offer-accepted': 'Oferta de lista de espera aceptada',
+      'offer-declined': 'Oferta de lista de espera rechazada',
+      'offer-expired': 'Oferta de lista de espera vencida',
+      'arrival-recorded': 'Llegada registrada',
+      'room-assigned': 'Consultorio asignado',
+      'room-corrected': 'Consultorio corregido',
+      'slip-print-requested': 'Impresión del volante solicitada',
+      'visit-finished': 'Visita finalizada'
+    },
+    stage: {
+      'not-arrived': 'Pendiente de llegada',
+      'in-clinic': 'En clínica',
+      finished: 'Visita finalizada'
+    },
+
+    arrival: {
+      action: 'Registrar llegada',
+      title: 'Registrar llegada',
+      doneTitle: 'Llegada registrada',
+      lede: 'Comprueba que es la persona que está en el mostrador y asígnale un consultorio.',
+      patient: 'Paciente',
+      reference: 'Referencia',
+      when: 'Cita',
+      clinic: 'Sede',
+      service: 'Tipo de consulta',
+      curemdWarning:
+        'Esta cita sigue pendiente de registrar en CureMD. Registrar la llegada no lo hace, y la tarea se mantiene en la lista de lo que falta por hacer allí.',
+      room: 'Consultorio',
+      roomNote: 'Se elige una sola vez y se mantiene durante toda la visita. Si te equivocas, se puede corregir después.',
+      roomLater: 'Decidir el consultorio más tarde',
+      allTaken: 'Todos los consultorios de esta sede están ocupados. Puedes registrar la llegada y asignar uno cuando quede libre.',
+      confirm: 'Registrar llegada',
+      recorded: '{patient} llegó a las {time}.',
+      recordedRoom: 'Consultorio: {room}.',
+      recordedNoRoom: 'Todavía sin consultorio. Puedes asignarlo desde el listado de la clínica.',
+      printNow: 'Imprimir el volante'
+    },
+
+    floor: {
+      title: 'En la clínica',
+      lede: 'Registre la llegada, asigne un consultorio e imprima el volante de atención.',
+      stageLabel: 'Visita',
+      roomLabel: 'Consultorio',
+      arrivedLabel: 'Llegada',
+      leftLabel: 'Salida',
+      printsLabel: 'Volante',
+      printsValue: 'Solicitado una vez | Solicitado {count} veces',
+      panelNote: 'La visita se sigue aparte del estado de la cita y del registro en CureMD.',
+      stageFilter: 'Visita',
+      nobody: 'Ahora mismo no hay nadie en la clínica.',
+      noneFinished: 'Todavía no ha finalizado ninguna visita.',
+      noRoom: 'Por asignar',
+      noRoomYet: 'Sin consultorio',
+      appointmentAt: 'cita {time}',
+      arrivedAt: 'llegó {time}',
+      leftAt: 'salió {time}',
+      here: 'lleva {count} min',
+      taken: 'ocupado',
+      moreActions: 'Más acciones',
+      correctRoom: 'Corregir consultorio',
+      correctRoomLabel: 'Consultorios de esta sede',
+      printSlip: 'Imprimir volante',
+      finishVisit: 'Finalizar visita'
+    },
+
     patientType: {
       new: 'Primera visita',
       existing: 'Ya paciente'
@@ -526,8 +683,6 @@ export default {
         offering: 'Ofreciendo…',
         reasons: {
           waitingSince: 'Esperando desde el {date}',
-          askedForProvider: 'Pidió este profesional',
-          anyProvider: 'Le vale cualquiera',
           bringsForward: 'Adelantaría la del {from}',
           bandMorning: 'Puede por la mañana',
           bandAfternoon: 'Puede por la tarde',
@@ -576,7 +731,7 @@ export default {
       explain: 'Esto es lo que vería el paciente. No se envía nada: ni correo ni SMS.',
       to: 'Para {name}',
       greeting: 'Hola, {name}:',
-      body: 'Ha quedado libre una cita antes en Lorba Medical {clinic}.',
+      body: 'Ha quedado libre una cita antes con el Dr. Lorba en {clinic}.',
       details: '{service} · {date} a las {time} · con {provider}',
       replaces: 'Si la aceptas, sustituiría a tu cita del {when}.',
       accept: 'Aceptar este horario',
@@ -617,25 +772,27 @@ export default {
       inRange: 'En el periodo seleccionado',
       rightNow: 'Ahora mismo',
       metrics: {
-        appointments: 'Citas activas',
-        confirmed: 'Confirmadas, aún sin atender',
+        requested: 'Solicitudes por revisar',
+        confirmed: 'Citas confirmadas',
+        free: 'Huecos libres',
+        held: 'Huecos retenidos',
         cancelled: 'Cancelaciones',
-        free: 'Tiempo libre de profesional',
-        filled: 'Huecos cubiertos con la lista',
-        waiting: 'Pacientes esperando',
-        offered: 'Ofertas pendientes',
-        openings: 'Huecos por cubrir',
-        holds: 'Horarios retenidos'
+        pendingRegistration: 'Por registrar en CureMD',
+        pendingChange: 'Cambios por aplicar',
+        pendingCancellation: 'Cancelaciones por hacer',
+        waiting: 'Pacientes en lista de espera',
+        filled: 'Huecos cubiertos con la lista'
       },
-      noPending: 'Esta demo no tiene estado «pendiente de confirmar»: la cita queda confirmada en el momento de reservarla.',
+      localOnly: 'La capacidad son las franjas de diez minutos de esta demo, no una lectura en directo de CureMD. Una solicitud no es una cita confirmada y nunca se cuenta como tal.',
       sites: {
         title: 'Por sede',
-        definition: 'La ocupación son los minutos reservados divididos entre los minutos que ofrecen los profesionales de la sede. Las cancelaciones no cuentan como ocupación y las retenciones se muestran aparte.',
-        booked: 'Reservado',
-        held: 'Retenido',
-        free: 'Libre',
-        occupancy: '{percent}% de ocupación',
-        appointments: 'sin citas | 1 cita | {count} citas',
+        definition: 'Cada sede ofrece franjas de diez minutos y, por ahora, atiende a un paciente por franja. La barra muestra las citas confirmadas, después las solicitudes por revisar y después los huecos retenidos por un cambio o una oferta.',
+        confirmed: 'Confirmadas',
+        requested: 'Solicitudes',
+        held: 'Retenidos',
+        free: 'Libres',
+        share: '{percent}% confirmado',
+        capacity: '{count} franjas en el periodo',
         goToAgenda: 'Abrir la agenda'
       },
       activity: {
@@ -645,22 +802,67 @@ export default {
     },
 
     activity: {
-      'appointment-cancelled': '{patient} anuló {service} del {when}',
-      'appointment-rescheduled': '{patient} se movió al {when}',
+      'request-created': '{patient} solicitó el {when}',
+      'appointment-confirmed': '{patient} confirmada para el {when}',
+      'registration-declared': 'Registrada en CureMD: {patient}, {when}',
+      'change-requested': '{patient} pasa del {was} al {when}',
+      'change-applied': 'Cambio aplicado en CureMD: {patient} ahora el {when}',
+      'change-abandoned': 'Cambio descartado para {patient}; se mantiene el {when}',
+      'cancellation-requested': '{patient} canceló el {when}: falta retirarla de CureMD',
+      'cancellation-completed': 'Cancelación hecha en CureMD: {patient}, {when}',
+      'marked-unavailable': 'Cerrada como no disponible: {patient}, {when}',
+      'alternative-proposed': 'Se propuso el {when} a {patient}',
+      'alternative-accepted': '{patient} aceptó el {when}',
+      'note-added': 'Nota añadida para {patient}',
+      'arrival-recorded': '{patient} ha llegado',
+      'room-assigned': '{patient} pasa a {when}',
+      'room-corrected': '{patient}: consultorio corregido a {when}',
+      'slip-print-requested': 'Volante solicitado para {patient}',
+      'visit-finished': '{patient} ha finalizado su visita',
       'opening-detected': 'Hueco libre el {when}: nadie encaja en la lista | Hueco libre el {when}: encaja 1 paciente | Hueco libre el {when}: encajan {count} pacientes',
       'offer-sent': 'Ofrecido el {when} a {patient}',
       'offer-accepted': '{patient} aceptó el {when}',
       'offer-declined': '{patient} rechazó el {when}',
       'offer-expired': 'Venció la retención del {when}'
     },
-
     demo: {
       title: 'Controles de demostración',
       note: 'Son para la demo, no para un mostrador real.',
       load: 'Cargar escenario de ejemplo',
       loaded: 'Escenario de ejemplo cargado.',
-      openPrepared: 'Abrir la cita preparada para anular',
-      preparedMissing: 'Carga antes el escenario de ejemplo.'
+      openRequest: 'Abrir la solicitud por registrar',
+      openCancellation: 'Abrir la cancelación pendiente',
+      missing: 'Carga antes el escenario de ejemplo.'
+    }
+  },
+
+  slip: {
+    title: 'Volante de atención',
+    demoMark: 'DEMO — DATOS FICTICIOS',
+    reference: 'Referencia de la cita',
+    patient: 'Paciente',
+    appointment: 'Cita',
+    arrived: 'Hora de llegada',
+    clinic: 'Sede',
+    room: 'Consultorio',
+    roomPending: 'Por asignar',
+    service: 'Tipo de consulta',
+    curemdReference: 'Referencia CureMD',
+    print: 'Abrir el diálogo de impresión',
+    note: 'La hoja es A5 vertical y se imprime legible en A4. No se envía nada a ningún sitio: tu navegador abre su propio diálogo de impresión, donde también puedes guardar un PDF. Volver a imprimir no cambia nada.',
+    languageLabel: 'Idioma de la hoja',
+    footer: 'Hoja de demostración. El médico, la clínica y esta cita son inventados. Los espacios de arriba son para rellenar a mano; ningún dato de esta hoja ha sido medido ni generado por un programa.',
+    vitals: {
+      title: 'Signos vitales — para anotar a mano',
+      bloodPressure: 'Presión arterial',
+      heartRate: 'Frecuencia cardíaca',
+      respiratoryRate: 'Frecuencia respiratoria',
+      temperature: 'Temperatura',
+      oxygen: 'Saturación de oxígeno',
+      weight: 'Peso',
+      height: 'Talla',
+      notes: 'Observaciones',
+      takenBy: 'Toma de signos vitales (nombre o iniciales)'
     }
   },
 
@@ -669,7 +871,7 @@ export default {
     clinics: 'Sedes',
     practice: 'Sobre esta demo',
     emergency: 'En caso de urgencia médica llama al 911. Esta web no se atiende de forma continua.',
-    disclaimer: 'Lorba Medical es una consulta ficticia creada como demostración de diseño. No es un proveedor médico real, los profesionales no existen y ninguna cita reservada aquí es real.',
+    disclaimer: 'El Dr. Lorba es un médico ficticio y esta web es una demostración de diseño. No es un proveedor médico real, las clínicas no existen y ninguna cita pedida aquí es real.',
     credits: 'Créditos de las imágenes',
     reception: 'Demo de recepción'
   },

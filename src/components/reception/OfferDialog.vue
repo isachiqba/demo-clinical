@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { locationById } from '@/data/locations'
-import { providerById } from '@/data/providers'
 import { serviceById } from '@/data/services'
 import { localized } from '@/i18n'
 import { HOLD_MINUTES } from '@/services/schedulingApi'
@@ -61,8 +60,7 @@ const messageDetails = computed(() => {
   return say('reception.offer.details', {
     service: serviceById(current.serviceId)?.name[patientLanguage.value] ?? '',
     date: formatWallDate(current.startWall, patientLanguage.value),
-    time: formatWallTime(current.startWall, patientLanguage.value),
-    provider: providerById(current.providerId)?.name ?? ''
+    time: formatWallTime(current.startWall, patientLanguage.value)
   })
 })
 

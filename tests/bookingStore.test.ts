@@ -13,7 +13,6 @@ const aSlot = async (): Promise<Slot> => {
   const slots = await schedulingApi.getDaySlots({
     serviceId: 'primary-care',
     locationId: 'downtown',
-    providerId: 'ap-elena-sandoval',
     dateKey: DAY
   })
   return slots[0]
@@ -36,8 +35,8 @@ describe('booking draft', () => {
     expect(booking.canEnter('place')).toBe(true)
     expect(booking.furthestStep).toBe('place')
 
+    // A clinic is all that is needed: patients do not choose a clinician.
     booking.selectLocation('downtown')
-    booking.selectProvider('ap-elena-sandoval')
     expect(booking.canEnter('when')).toBe(true)
     expect(booking.canEnter('details')).toBe(false)
   })
@@ -47,7 +46,6 @@ describe('booking draft', () => {
     booking.selectService('primary-care')
     booking.selectPatientType('existing')
     booking.selectLocation('downtown')
-    booking.selectProvider('ap-elena-sandoval')
     booking.selectSlot(await aSlot())
     expect(booking.draft.slot).not.toBeNull()
 
@@ -55,27 +53,7 @@ describe('booking draft', () => {
     expect(booking.draft.slot).toBeNull()
   })
 
-  it('drops a chosen time, and a clinician who does not work there, when the clinic changes', async () => {
-    const booking = useBookingStore()
-    booking.selectService('primary-care')
-    booking.selectPatientType('existing')
-    booking.selectLocation('downtown')
-    booking.selectProvider('ap-elena-sandoval') // Downtown and Northside only
-    booking.selectSlot(await aSlot())
 
-    booking.selectLocation('westside')
-    expect(booking.draft.slot).toBeNull()
-    expect(booking.draft.providerId).toBeNull()
-  })
-
-  it('keeps a clinician who also works at the new clinic', () => {
-    const booking = useBookingStore()
-    booking.selectService('primary-care')
-    booking.selectLocation('downtown')
-    booking.selectProvider('ap-elena-sandoval')
-    booking.selectLocation('northside')
-    expect(booking.draft.providerId).toBe('ap-elena-sandoval')
-  })
 
   it('validates the details field by field', () => {
     const booking = useBookingStore()
@@ -108,7 +86,7 @@ describe('booking draft', () => {
     expect(booking.detailsValid).toBe(true)
   })
 
-  it('confirms through the shared schedule, so reception sees it at once', async () => {
+  it('sends a request through the shared schedule, so reception sees it at once', async () => {
     const schedule = useScheduleStore()
     await schedule.refresh()
     const before = schedule.appointments.length
@@ -117,14 +95,16 @@ describe('booking draft', () => {
     booking.selectService('primary-care')
     booking.selectPatientType('new')
     booking.selectLocation('downtown')
-    booking.selectProvider('ap-elena-sandoval')
     booking.selectSlot(await aSlot())
     booking.useSampleDetails()
 
-    const appointment = await booking.confirm()
+    const appointment = await booking.submitRequest()
     expect(appointment).not.toBeNull()
     expect(schedule.appointments.length).toBe(before + 1)
     expect(schedule.byReference(appointment!.reference)?.id).toBe(appointment!.id)
+    // The public site produces requests, never confirmed appointments.
+    expect(appointment!.status).toBe('requested')
+    expect(appointment!.curemd.status).toBe('pending-registration')
   })
 
   it('switching language leaves every selection alone', async () => {
@@ -132,7 +112,6 @@ describe('booking draft', () => {
     booking.selectService('follow-up')
     booking.selectPatientType('existing')
     booking.selectLocation('northside')
-    booking.selectProvider('any')
     booking.updatePatient({ firstName: 'Ada' })
     const before = JSON.parse(JSON.stringify(booking.draft))
 

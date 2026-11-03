@@ -18,11 +18,25 @@ import AppDialog from '@/components/ui/AppDialog.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 /**
- * Reschedules within the same clinician and clinic. Only slots the scheduling service
- * reports as free are offered, and the move is re-validated on submit, so two open
- * panels cannot produce a clash.
+ * Picks another time at the same clinic, for one of two jobs:
+ *
+ *  - `reschedule` asks for a change. If the appointment is already in CureMD the new time
+ *    is only *held*; it does not become the patient's time until reception says they have
+ *    changed it there.
+ *  - `propose` puts a time to a patient whose request could not be met. It changes
+ *    nothing until the patient accepts.
+ *
+ * Only slots the service reports as free are offered, and the choice is re-validated on
+ * submit, so two open panels cannot produce a clash.
  */
-const props = defineProps<{ open: boolean; appointment: Appointment | null }>()
+const props = withDefaults(
+  defineProps<{
+    open: boolean
+    appointment: Appointment | null
+    mode?: 'reschedule' | 'propose'
+  }>(),
+  { mode: 'reschedule' }
+)
 const emit = defineEmits<{ close: []; moved: [appointment: Appointment] }>()
 
 const { t, locale } = useI18n()
@@ -41,7 +55,6 @@ const load = async (): Promise<void> => {
   const found = await schedulingApi.getDaySlots({
     serviceId: appointment.serviceId,
     locationId: appointment.locationId,
-    providerId: appointment.providerId,
     dateKey: dateKey.value
   })
   slots.value = found
@@ -79,7 +92,11 @@ const maxDate = addDaysToKey(todayKey(), 120)
 const submit = async (): Promise<void> => {
   if (!props.appointment || !chosen.value) return
   failed.value = false
-  const result = await schedule.reschedule(props.appointment.id, chosen.value)
+  const guard = { expectedVersion: props.appointment.version }
+  const result =
+    props.mode === 'propose'
+      ? await schedule.proposeAlternative(props.appointment.id, chosen.value, guard)
+      : await schedule.requestChange(props.appointment.id, chosen.value, guard)
   if (!result.ok) {
     failed.value = true
     await load()
@@ -92,11 +109,13 @@ const submit = async (): Promise<void> => {
 <template>
   <AppDialog
     :open="open"
-    :title="t('reception.reschedule.title')"
+    :title="t(mode === 'propose' ? 'reception.propose.title' : 'reception.reschedule.title')"
     :close-label="t('common.close')"
     @close="emit('close')"
   >
-    <p class="lede-sm">{{ t('reception.reschedule.lede') }}</p>
+    <p class="lede-sm">
+      {{ t(mode === 'propose' ? 'reception.propose.lede' : 'reception.reschedule.lede') }}
+    </p>
     <p class="current">
       {{ t('reception.reschedule.current', { when: currentLabel }) }} · {{ whereLabel }}
     </p>
@@ -130,7 +149,11 @@ const submit = async (): Promise<void> => {
 
     <template #actions>
       <AppButton :disabled="!chosen" :loading="schedule.working" @click="submit">
-        {{ schedule.working ? t('reception.reschedule.moving') : t('reception.reschedule.confirm') }}
+        {{
+          schedule.working
+            ? t('reception.reschedule.moving')
+            : t(mode === 'propose' ? 'reception.propose.confirm' : 'reception.reschedule.confirm')
+        }}
       </AppButton>
       <AppButton variant="secondary" @click="emit('close')">{{ t('common.cancel') }}</AppButton>
     </template>

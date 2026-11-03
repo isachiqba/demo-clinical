@@ -10,10 +10,7 @@ export interface ImageCredit {
  */
 export const imageCredits: ImageCredit[] = [
   { file: 'hero-consultation.webp', photographer: 'Vitaly Gariev', source: 'https://unsplash.com/photos/MJmsLpeHPfg' },
-  { file: 'care-notes.webp', photographer: 'Vitaly Gariev', source: 'https://unsplash.com/photos/8WYkI3cEZm8' },
-  { file: 'team-1.webp', photographer: 'Vitaly Gariev', source: 'https://unsplash.com/photos/iyeUwItlIPk' },
-  { file: 'team-2.webp', photographer: 'Vitaly Gariev', source: 'https://unsplash.com/photos/HGiYag5IjXw' },
-  { file: 'team-3.webp', photographer: 'Vitaly Gariev', source: 'https://unsplash.com/photos/XSPFs82j_v0' },
+  { file: 'doctor-lorba.webp', photographer: 'Vitaly Gariev', source: 'https://unsplash.com/photos/iyeUwItlIPk' },
   { file: 'clinic-downtown.webp', photographer: 'Kouji Tsuru', source: 'https://unsplash.com/photos/I4Pkd8bDGkk' },
   { file: 'clinic-northside.webp', photographer: 'Seyed Amir Mohammad Tabatabaee', source: 'https://unsplash.com/photos/AHjWQL-hY30' },
   { file: 'clinic-westside.webp', photographer: 'Benyamin Bohlouli', source: 'https://unsplash.com/photos/B_sK_xgzwVA' }

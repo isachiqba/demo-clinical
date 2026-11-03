@@ -4,7 +4,7 @@ import { CLINIC_TIME_ZONE, zoneAbbreviation } from '@/services/clinicTime'
 import AppButton from '@/components/ui/AppButton.vue'
 
 const { t } = useI18n()
-const faqKeys = ['account', 'change', 'who'] as const
+const faqKeys = ['account', 'change', 'spanish'] as const
 </script>
 
 <template>

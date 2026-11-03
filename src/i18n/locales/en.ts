@@ -1,19 +1,19 @@
 export default {
   brand: {
-    name: 'Lorba Medical',
-    line: 'Primary care across three neighbourhood clinics.'
+    name: 'Dr. Lorba',
+    line: 'One doctor. Three neighbourhood clinics.'
   },
 
   demo: {
     chip: 'Demo',
-    banner: 'Demonstration site. The practice, the clinicians and every appointment here are invented, and nothing you enter is sent anywhere.',
+    banner: 'Demonstration site. The doctor, the clinics and every appointment here are invented, and nothing you enter is sent anywhere.',
     short: 'Fictional demo data.',
     reset: 'Restore demo data',
     resetTitle: 'Restore the demo to its starting state?',
     resetBody: 'Every booking made during this session is discarded and the original sample schedule comes back.',
     resetConfirm: 'Yes, restore it',
     resetDone: 'Demo data restored.',
-    illustrative: 'Demonstration profile · illustrative photograph',
+    illustrative: 'Fictional doctor · illustrative photograph',
     illustrativeShort: 'Illustrative photograph'
   },
 
@@ -41,7 +41,7 @@ export default {
 
   nav: {
     care: 'Care',
-    team: 'Our team',
+    team: 'Meet Dr. Lorba',
     locations: 'Locations',
     info: 'Patient information',
     book: 'Book an appointment',
@@ -51,12 +51,14 @@ export default {
 
   home: {
     hero: {
-      title: 'Personal care. Closer to you.',
-      body: 'Lorba Medical is a primary care practice with three neighbourhood clinics. Book a time at whichever one suits you, with a clinician who keeps your history from one appointment to the next.',
-      book: 'Book an appointment',
-      services: 'See what we care for',
-      languages: 'Appointments available in English and Spanish.',
-      imageAlt: 'A clinician listening to a patient across a consultation desk.'
+      kicker: 'Internal medicine',
+      title: "Welcome to Dr. Lorba's practice",
+      body: 'Find close, personal care at any of our three locations. We are here to listen, answer your questions and support you in looking after your health.',
+      book: 'Request an appointment',
+      meet: 'Meet Dr. Lorba',
+      clinics: 'Downtown · Northside · Westside',
+      languages: 'Appointments in English and Spanish.',
+      imageAlt: 'A doctor listening to a patient across a consultation desk.'
     },
 
     quick: {
@@ -73,40 +75,13 @@ export default {
       kicker: 'Care',
       title: 'What you can book',
       lede: 'Four kinds of appointment, each with a length that fits what it is for.',
-      more: 'More about our care'
-    },
-
-    approach: {
-      kicker: 'How we work',
-      title: 'Unhurried appointments, kept with the same clinician.',
-      imageAlt: 'A clinician writing notes on a clipboard during an appointment.',
-      points: {
-        listening: {
-          title: 'Time to be heard',
-          body: 'Appointment lengths are set by the type of visit rather than by a single fixed slot, so a longer conversation does not need a second appointment.'
-        },
-        continuity: {
-          title: 'The same face',
-          body: 'You can keep booking the clinician you have been seeing. When you would rather be seen sooner, we offer whoever is free first.'
-        },
-        convenience: {
-          title: 'Easy to get to',
-          body: 'Three clinics, step-free entrances, and a booking you can finish in a couple of minutes without creating an account.'
-        }
-      }
-    },
-
-    team: {
-      kicker: 'Our team',
-      title: 'Who you would be seeing',
-      lede: 'Three demonstration profiles. The names are invented and the portraits are illustrative.',
-      more: 'Meet the team'
+      more: 'More about his care'
     },
 
     locations: {
       kicker: 'Locations',
-      title: 'Three clinics, one practice',
-      lede: 'Whichever one you book, your appointment history goes with you.',
+      title: 'His practice, in three locations',
+      lede: 'Whichever one you come to, it is the same doctor and the same notes.',
       more: 'All locations'
     },
 
@@ -118,34 +93,39 @@ export default {
     },
 
     closing: {
-      title: 'Book when it suits you',
-      body: 'Pick an appointment type, choose a clinic and take the first time that works. Nothing is confirmed until you say so.',
-      action: 'Book an appointment'
+      title: 'Ask for a time that suits you',
+      body: 'Pick an appointment type, choose a clinic and take the first time that works. The clinic confirms it afterwards.',
+      action: 'Request an appointment'
     }
   },
 
   care: {
     title: 'Care & services',
-    lede: 'Lorba Medical is a primary care practice. These are the four appointment types you can book, and what each one is for.',
+    lede: 'The kinds of appointment Dr. Lorba sees patients for, and what each one is for.',
     duration: 'Usual length',
-    book: 'Book this appointment',
-    notAdvice: 'This page describes the kinds of appointment we offer. It is not medical advice, and in an emergency you should call 911 rather than book online.'
+    book: 'Request this appointment',
+    notAdvice: 'This page describes the kinds of appointment offered. It is not medical advice, and in an emergency you should call 911 rather than ask for a time online.'
   },
 
   team: {
-    title: 'Our team',
-    lede: 'Three clinicians, working across the three clinics. These are demonstration profiles created for this prototype.',
+    title: 'Meet Dr. Lorba',
     speaks: 'Speaks',
-    worksAt: 'Works at',
-    offers: 'Offers',
-    book: 'Book with {name}',
-    disclaimer: 'These profiles are fictional. The photographs are illustrative stand-ins from a stock library and do not show the people named here, who do not exist. No qualifications, registrations or affiliations are claimed.'
+    whereLabel: 'Consults at',
+    whereValue: 'Downtown, Northside and Westside',
+    hours: {
+      title: 'Consulting hours',
+      lede: 'Where he is each day. This is the same schedule the appointment times are offered from, so the site can never offer you a time when he is at another clinic.',
+      off: 'No consulting',
+      note: 'A clinic can be open on a day he is not there. Opening hours for each clinic are on the locations page. Demonstration data: this is an invented timetable.'
+    },
+    disclaimer: 'Dr. Lorba is a fictional doctor created for this demonstration. The photograph is an illustrative stand-in from a stock library and does not show him, because he does not exist. No qualifications, registrations, certifications, years of practice or hospital affiliations are claimed anywhere on this site.'
   },
 
   locations: {
     title: 'Locations',
-    lede: 'Three clinics in the same practice. Opening hours below are demonstration data.',
-    hours: 'Opening hours',
+    hours: 'Clinic opening hours',
+    consulting: 'Dr. Lorba consults',
+    consultingNote: 'The clinic may be open at other times; these are the hours he is here.',
     closed: 'Closed',
     openNow: 'Open now',
     closedNow: 'Closed now',
@@ -164,9 +144,9 @@ export default {
       parking: 'Parking',
       dropOff: 'Drop-off lane'
     },
-    call: 'Call the clinic',
+    call: 'Call this clinic',
     book: 'Book at this clinic',
-    addressNote: 'Street addresses are deliberately left out of this demo so no real practice can be confused with it.',
+    addressNote: 'Street addresses and real phone numbers are deliberately left out of this demo so no real practice can be confused with it.',
     days: {
       0: 'Sunday',
       1: 'Monday',
@@ -201,13 +181,9 @@ export default {
           q: 'Can I change or cancel an appointment?',
           a: 'Yes. Your confirmation page carries a reference and links to cancel. In this demo you can also open the reception view and reschedule from there.'
         },
-        who: {
-          q: 'Will I see the same clinician each time?',
-          a: 'You can choose a clinician when you book and keep choosing them. If you would rather be seen sooner, pick "First available" and we offer the earliest opening with anyone.'
-        },
         spanish: {
           q: 'Can I be seen in Spanish?',
-          a: 'Two of the three clinicians in this demo work in English and Spanish, and each profile says which. You can also switch this site to Spanish at the top of the page.'
+          a: 'Yes. Dr. Lorba sees patients in English and Spanish. You can also switch this site to Spanish at the top of the page.'
         },
         timezone: {
           q: 'Which times am I looking at?',
@@ -217,7 +193,7 @@ export default {
     },
     credits: {
       title: 'Image credits',
-      body: 'Photography is from Unsplash and used under the Unsplash License. The people shown are not the fictional clinicians named on this site.',
+      body: 'Photography is from Unsplash and used under the Unsplash License. The person shown is not Dr. Lorba, who does not exist.',
       photographer: 'Photograph by {name}',
       view: 'View source'
     }
@@ -228,17 +204,16 @@ export default {
     stepOf: 'Step {current} of {total}',
     steps: {
       visit: 'Appointment',
-      place: 'Clinic & clinician',
+      place: 'Clinic',
       when: 'Date & time',
       details: 'Your details'
     },
     summary: {
-      title: 'Your booking',
-      empty: 'Your choices will appear here as you make them.',
+      title: 'Your request',
+      doctor: 'Doctor',
       service: 'Appointment',
       patientType: 'Patient',
       location: 'Clinic',
-      provider: 'Clinician',
       when: 'Date & time'
     },
 
@@ -254,46 +229,37 @@ export default {
     },
 
     place: {
-      title: 'Where, and with whom?',
-      lede: 'Only clinicians who offer {service} are shown.',
+      title: 'Where would you like to be seen?',
+      lede: 'Pick the clinic for your {service} appointment.',
       clinic: 'Clinic',
-      anyLocation: 'Any location',
-      anyLocationHelp: 'Compare all three and take the earliest opening.',
-      clinician: 'Clinician',
-      firstAvailable: 'First available',
-      firstAvailableHelp: 'The earliest opening with any of our clinicians.',
-      nextOpening: 'Next opening {when}',
-      noOpenings: 'No openings in the next 60 days',
-      checking: 'Checking availability…',
-      noProviders: 'No clinician offers this appointment at that clinic. Try another clinic, or choose “Any location”.',
-      atClinics: 'At {clinics}'
+      anyLocation: 'Any clinic',
+      anyLocationHelp: 'Compare all three and take the earliest time.',
+      nextOpening: 'Earliest time {when}',
+      noOpenings: 'Nothing in the next 60 days',
+      checking: 'Checking…'
     },
-
     when: {
       title: 'Pick a date and time',
-      ledeProvider: 'Openings with {provider} at {location}.',
-      ledeAny: 'Openings at {location}, with whoever is free.',
+      lede: 'Times available at {location}, in ten-minute slots.',
       anyLocationLabel: 'any clinic',
-      firstAvailableLabel: 'the first available clinician',
+      subjectToConfirmation: 'The date and time you choose are subject to confirmation by the clinic.',
       previousMonth: 'Previous month',
       nextMonth: 'Next month',
-      noneLabel: 'no openings',
-      someLabel: '{count} openings',
+      noneLabel: 'nothing free',
+      someLabel: '{count} times free',
       morning: 'Morning',
       afternoon: 'Afternoon',
-      evening: 'Evening',
+      evening: 'Late afternoon',
       loading: 'Checking the calendar…',
-      chosen: 'You chose {time} with {provider} at {location}.',
+      chosen: 'You chose {time} at {location}.',
       empty: {
         title: 'Nothing free on this day',
         body: 'Try one of these instead.',
-        nextDay: 'Next opening · {when}',
-        anyProvider: 'Allow any clinician',
+        nextDay: 'Next free time · {when}',
         anyLocation: 'Allow any clinic',
-        nothing: 'There are no openings in the next 60 days for this combination. Try another appointment type.'
+        nothing: 'There is nothing free in the next 60 days for this combination. Try another appointment type.'
       }
     },
-
     details: {
       title: 'Your details',
       lede: 'Only what we need to hold the appointment.',
@@ -312,9 +278,9 @@ export default {
       selfPay: 'Paying directly',
       selfPayHelp: 'You will be told the cost before anything goes ahead.',
       noPolicy: 'We do not ask for a policy number, an ID document, a date of birth or card details.',
-      review: 'Check your booking',
-      confirm: 'Confirm booking',
-      confirming: 'Confirming…'
+      review: 'Check your request',
+      send: 'Send request',
+      sending: 'Sending…'
     },
 
     errors: {
@@ -343,8 +309,6 @@ export default {
     simulated: 'Simulated: this demo never sends a message, an email or a text. Reception can show you what the offer would look like.',
     service: 'Appointment type',
     clinics: 'Clinics you would go to',
-    clinician: 'Clinician',
-    anyClinician: 'Anyone available',
     dates: 'Between these dates',
     from: 'From',
     to: 'Until',
@@ -384,57 +348,82 @@ export default {
   },
 
   confirmation: {
-    simulated: 'Simulated booking',
-    title: 'That time is held.',
-    body: 'This is a demonstration, so no appointment exists and nothing was sent to you — no email, no text message. In a real practice this is where your confirmation would arrive.',
-    reference: 'Booking reference',
+    state: {
+      requested: 'Request received · awaiting confirmation',
+      confirmed: 'Appointment confirmed',
+      arrived: 'Arrived',
+      completed: 'Completed',
+      cancelled: 'Cancelled',
+      unavailable: 'Not available'
+    },
+    headline: {
+      requested: 'Request received.',
+      confirmed: 'Your appointment is confirmed.',
+      changePending: 'A new time is being arranged.',
+      cancellationPending: 'Your cancellation is being processed.',
+      cancelled: 'This appointment is cancelled.',
+      unavailable: 'We could not offer that time.'
+    },
+    body: {
+      requested: 'The clinic will check availability and confirm your appointment. Until then this is a request, not a booking.',
+      confirmed: 'The clinic has confirmed this appointment and entered it in its records.',
+      changePending: 'The clinic is moving your appointment. The time below stands until they confirm the new one.',
+      cancellationPending: 'The clinic is removing this appointment from its records. Nothing more is needed from you.',
+      cancelled: 'Nothing is booked. You can ask for another time whenever you like.',
+      unavailable: 'The clinic could not take that time and no alternative was agreed. You can ask for another one.'
+    },
+    nothingSent: 'This is a demonstration: no email and no text message is sent at any point.',
+    reference: 'Your reference',
     appointment: 'Appointment',
-    clinician: 'Clinician',
-    clinic: 'Clinic',
+    requestedTime: 'Time requested',
     when: 'Date & time',
+    clinic: 'Clinic',
     patient: 'Patient',
     payment: 'Payment',
+    changeProposed: 'Proposed new time: {when}. It is not yours until the clinic confirms it.',
     addToCalendar: 'Add to calendar (.ics)',
     calendarNote: 'The calendar file is labelled DEMO and is written in clinic time.',
-    manage: 'Cancel this booking',
-    cancelTitle: 'Cancel this demo booking?',
-    cancelBody: '{service} on {when}. The time goes straight back into the calendar.',
-    cancelConfirm: 'Yes, cancel it',
-    cancelled: 'This booking is cancelled. The time is free again.',
-    bookAnother: 'Book another appointment',
-    openReception: 'Change it in the reception demo',
-    notFound: 'We could not find a booking with that reference.',
+    calendarLater: 'A calendar file is offered once the clinic has confirmed the appointment.',
+    cancelRequest: 'Withdraw this request',
+    cancelAppointment: 'Cancel this appointment',
+    cancelRequestTitle: 'Withdraw this request?',
+    cancelTitle: 'Cancel this appointment?',
+    cancelRequestBody: '{service} on {when}. Nothing has been booked yet, so there is nothing to undo.',
+    cancelBody: '{service} on {when}. The clinic will remove it from its records.',
+    cancelConfirm: 'Yes, go ahead',
+    bookAnother: 'Ask for another appointment',
+    openReception: 'See it in the reception demo',
+    notFound: 'We could not find anything with that reference.',
     notFoundBody: 'It may have been reset with the demo data.'
   },
-
   reception: {
     title: 'Reception',
     subtitle: 'Demo front desk',
     notice: 'Demonstration view. There is no sign-in and no real access control — anyone with this link sees the same invented schedule.',
     nav: {
       overview: 'Overview',
+      curemd: 'CureMD inbox',
+      floor: 'Patients in clinic',
       agenda: 'Day agenda',
       list: 'List',
       waitlist: 'Waitlist',
       settings: 'Demo data'
     },
     stats: {
-      today: 'Appointments this day',
-      upcoming: 'Still to come',
-      cancelled: 'Cancelled',
-      newPatients: 'First visits'
+      today: 'On the books this day',
+      requested: 'Requests to review',
+      confirmed: 'Confirmed',
+      cancelled: 'Cancelled'
     },
     filters: {
       title: 'Filters',
       date: 'Date',
       location: 'Clinic',
-      provider: 'Clinician',
       status: 'Status',
       search: 'Search',
       searchPlaceholder: 'Name or reference',
       clear: 'Clear filters',
       allLocations: 'All clinics',
-      allProviders: 'All clinicians',
       allStatuses: 'All statuses',
       today: 'Today'
     },
@@ -442,6 +431,7 @@ export default {
       empty: 'Nothing booked for this day.',
       emptyFiltered: 'No appointments match these filters.',
       emptyHint: 'Clear the filters, or pick another date.',
+      notHere: 'Not consulting here today',
       free: 'Free',
       column: '{name} · {location}'
     },
@@ -450,8 +440,7 @@ export default {
       when: 'When',
       patient: 'Patient',
       appointment: 'Appointment',
-      clinician: 'Clinician',
-      clinic: 'Clinic',
+        clinic: 'Clinic',
       status: 'Status',
       reference: 'Reference'
     },
@@ -463,21 +452,35 @@ export default {
       contact: 'Contact',
       noPhone: 'No phone given',
       appointment: 'Appointment',
-      clinician: 'Clinician',
       clinic: 'Clinic',
       when: 'Date & time',
+      requestedTime: 'Time requested',
       status: 'Status',
-      booked: 'Booked {when}',
       actions: 'Actions',
-      reschedule: 'Reschedule',
+      history: 'What has been declared',
+      reschedule: 'Move to another time',
+      proposeAlternative: 'Propose another time',
+      proposed: 'Proposed to the patient',
+      proposedBody: 'Nothing changes until the patient accepts. There is no patient to answer here, so you can answer for them.',
+      simulateAccept: 'Simulate the patient accepting',
+      markUnavailable: 'Close as not available',
       cancel: 'Cancel appointment',
+      bookAnother: 'Book another appointment',
+      finishedNote: 'This visit is over. The record stays as it is; anything further is a new appointment.',
       cancelTitle: 'Cancel this appointment?',
-      cancelBody: '{patient} · {service} · {when}. The time goes back into the calendar straight away.',
+      cancelBodyRequest: '{patient} · {when}. Nothing is in CureMD yet, so the slot frees immediately.',
+      cancelBodyRegistered: '{patient} · {when}. It stays on the books until you declare it cancelled in CureMD.',
       cancelConfirm: 'Yes, cancel it',
       close: 'Close panel'
     },
+    propose: {
+      title: 'Propose another time',
+      lede: 'Put a time to the patient. Nothing moves until they accept it, and the slot is held meanwhile so nobody else takes it.',
+      confirm: 'Propose this time'
+    },
+
     reschedule: {
-      title: 'Reschedule appointment',
+      title: 'Move to another time',
       lede: 'Only times that are genuinely free are offered, so this cannot create a clash.',
       current: 'Currently {when}',
       noSlots: 'No free times on this day.',
@@ -486,12 +489,166 @@ export default {
       failed: 'That time was taken while this panel was open. Pick another.'
     },
     status: {
+      requested: 'Requested',
       confirmed: 'Confirmed',
       arrived: 'Arrived',
       completed: 'Completed',
       cancelled: 'Cancelled',
-      change: 'Change status'
+      unavailable: 'Not available'
     },
+    statusShort: 'Appointment',
+
+    curemd: {
+      title: 'CureMD',
+      short: 'CureMD',
+      inbox: 'Pending in CureMD',
+      inboxLede: 'Work that still has to be done by hand in CureMD. This application never contacts it: these are declarations by reception, not a check.',
+      nothingYet: 'Nothing recorded there yet',
+      currentTime: 'Time currently registered',
+      newTime: 'New time pending',
+      currentlyRegistered: 'Currently registered as {when} at {clinic}.',
+      reference: 'CureMD reference',
+      declaredBy: 'Declared by',
+      operation: 'Operation',
+      allOperations: 'All operations',
+      appointmentDate: 'Appointment',
+      searchPlaceholder: 'Name, reference or CureMD reference',
+      waiting: 'Waiting {age}',
+      ageMinutes: '{count} min',
+      ageHours: '{count} h',
+      ageDays: '{count} days',
+      none: 'Nothing is waiting on CureMD.',
+      noneFiltered: 'Nothing matches these filters.',
+      noneHint: 'New requests, agreed changes and cancellations of registered appointments all land here.',
+      status: {
+        'pending-registration': 'To register',
+        registered: 'Registered',
+        'change-pending': 'Change pending',
+        'cancellation-pending': 'Cancellation pending',
+        cancelled: 'Cancelled there',
+        'not-required': 'Nothing to do'
+      },
+      task: {
+        registration: 'To register',
+        change: 'Changes to apply',
+        cancellation: 'Cancellations to do'
+      },
+      taskBody: {
+        registration: 'Look the time up in CureMD, enter the appointment there, then record it here.',
+        change: 'Move the appointment in CureMD, then record it here. The patient keeps the old time until you do.',
+        cancellation: 'Take the appointment out of CureMD, then record it here. The slot stays taken until you do.'
+      },
+      dialog: {
+        whatToEnter: 'What to enter in CureMD',
+        reference: 'CureMD reference',
+        referenceHint: 'If CureMD gave you one, note it here.',
+        note: 'Note',
+        alsoConfirm: 'Confirm the appointment as well, now that it is registered',
+        noData: 'This records what you did by hand. It sends nothing to CureMD.',
+        operator: 'Recorded as {name}, with the time of the action.',
+        changedUnderneath: 'This appointment changed while the dialog was open. Close it and look again before recording anything.',
+        stale: 'The appointment changed while this was open, so nothing was recorded. Close and look again.',
+        failed: 'That could not be recorded. Check the appointment and try again.',
+        registration: {
+          title: 'Mark as registered in CureMD',
+          lede: 'Record that you have entered this appointment in CureMD.',
+          confirm: 'I have entered this appointment in CureMD.',
+          action: 'Mark as registered'
+        },
+        change: {
+          title: 'Mark change as applied in CureMD',
+          lede: 'Record that you have moved this appointment in CureMD.',
+          confirm: 'I have moved this appointment in CureMD.',
+          action: 'Mark change as applied'
+        },
+        cancellation: {
+          title: 'Mark cancellation as done in CureMD',
+          lede: 'Record that you have taken this appointment out of CureMD.',
+          confirm: 'I have cancelled this appointment in CureMD.',
+          action: 'Mark cancellation as done'
+        }
+      }
+    },
+
+    audit: {
+      'request-created': 'Request created',
+      'appointment-confirmed': 'Appointment confirmed',
+      'registration-declared': 'Declared registered in CureMD',
+      'change-requested': 'Change requested',
+      'change-applied': 'Change declared applied in CureMD',
+      'change-abandoned': 'Change dropped',
+      'cancellation-requested': 'Cancellation requested',
+      'cancellation-completed': 'Cancellation declared done',
+      'marked-unavailable': 'Closed as not available',
+      'alternative-proposed': 'Alternative proposed',
+      'alternative-accepted': 'Alternative accepted',
+      'note-added': 'Note added',
+      'offer-sent': 'Waitlist offer sent',
+      'offer-accepted': 'Waitlist offer accepted',
+      'offer-declined': 'Waitlist offer declined',
+      'offer-expired': 'Waitlist offer lapsed',
+      'arrival-recorded': 'Arrival recorded',
+      'room-assigned': 'Room assigned',
+      'room-corrected': 'Room corrected',
+      'slip-print-requested': 'Care slip print requested',
+      'visit-finished': 'Visit finished'
+    },
+    stage: {
+      'not-arrived': 'Not arrived',
+      'in-clinic': 'In clinic',
+      finished: 'Visit finished'
+    },
+
+    arrival: {
+      action: 'Record arrival',
+      title: 'Record arrival',
+      doneTitle: 'Arrival recorded',
+      lede: 'Check this is the person at the desk, and give them a room.',
+      patient: 'Patient',
+      reference: 'Reference',
+      when: 'Appointment',
+      clinic: 'Clinic',
+      service: 'Appointment type',
+      curemdWarning:
+        'This appointment is still waiting to be entered in CureMD. Recording the arrival does not do that, and it stays on the list of things to do there.',
+      room: 'Room',
+      roomNote: 'Chosen once and kept for the whole visit. It can be corrected afterwards if you pick the wrong one.',
+      roomLater: 'Decide the room later',
+      allTaken: 'Every room at this clinic is in use. You can record the arrival and give a room when one frees up.',
+      confirm: 'Record arrival',
+      recorded: '{patient} arrived at {time}.',
+      recordedRoom: 'Room: {room}.',
+      recordedNoRoom: 'No room yet. You can set one from the clinic list.',
+      printNow: 'Print the care slip'
+    },
+
+    floor: {
+      title: 'In the clinic',
+      lede: 'Record the arrival, assign a room and print the care slip.',
+      stageLabel: 'Visit',
+      roomLabel: 'Room',
+      arrivedLabel: 'Arrived',
+      leftLabel: 'Left',
+      printsLabel: 'Care slip',
+      printsValue: 'Requested once | Requested {count} times',
+      panelNote: 'The visit is tracked separately from the appointment and from CureMD.',
+      stageFilter: 'Visit',
+      nobody: 'Nobody is in the clinic right now.',
+      noneFinished: 'No visits have finished yet.',
+      noRoom: 'To be assigned',
+      noRoomYet: 'No room yet',
+      appointmentAt: 'appointment {time}',
+      arrivedAt: 'arrived {time}',
+      leftAt: 'left {time}',
+      here: 'here {count} min',
+      taken: 'taken',
+      moreActions: 'More actions',
+      correctRoom: 'Correct the room',
+      correctRoomLabel: 'Rooms at this clinic',
+      printSlip: 'Print slip',
+      finishVisit: 'Finish visit'
+    },
+
     patientType: {
       new: 'First visit',
       existing: 'Returning'
@@ -526,8 +683,6 @@ export default {
         offering: 'Offering…',
         reasons: {
           waitingSince: 'Waiting since {date}',
-          askedForProvider: 'Asked for this clinician',
-          anyProvider: 'Happy with anyone',
           bringsForward: 'Would bring forward {from}',
           bandMorning: 'Can come in the morning',
           bandAfternoon: 'Can come in the afternoon',
@@ -576,7 +731,7 @@ export default {
       explain: 'This is what the patient would see. Nothing is sent: no email, no text message.',
       to: 'To {name}',
       greeting: 'Hello {name},',
-      body: 'An earlier appointment has come free at Lorba Medical {clinic}.',
+      body: 'An earlier appointment with Dr. Lorba has come free at {clinic}.',
       details: '{service} · {date} at {time} · with {provider}',
       replaces: 'Taking it would replace your appointment on {when}.',
       accept: 'Accept this time',
@@ -617,25 +772,27 @@ export default {
       inRange: 'In the selected period',
       rightNow: 'Right now',
       metrics: {
-        appointments: 'Active appointments',
-        confirmed: 'Confirmed, not yet seen',
+        requested: 'Requests to review',
+        confirmed: 'Confirmed appointments',
+        free: 'Free slots',
+        held: 'Slots held',
         cancelled: 'Cancellations',
-        free: 'Free clinician time',
-        filled: 'Slots filled from the waitlist',
-        waiting: 'Patients waiting',
-        offered: 'Offers out',
-        openings: 'Slots to fill',
-        holds: 'Times held'
+        pendingRegistration: 'To register in CureMD',
+        pendingChange: 'Changes to apply',
+        pendingCancellation: 'Cancellations to do',
+        waiting: 'Patients on the waitlist',
+        filled: 'Slots covered from the waitlist'
       },
-      noPending: 'This demo has no “awaiting confirmation” state: a booking is confirmed the moment it is made.',
+      localOnly: 'Capacity is this demo’s own ten-minute slots, not a live reading of CureMD. A request is not a confirmed appointment and is never counted as one.',
       sites: {
         title: 'By clinic',
-        definition: 'Occupancy is booked minutes divided by the minutes the clinic’s clinicians are offering. Cancellations are not occupancy, and held times are counted separately.',
-        booked: 'Booked',
+        definition: 'Each clinic offers ten-minute slots and, for now, takes one patient per slot. The bar shows confirmed appointments, then requests still to review, then slots held for a pending change or offer.',
+        confirmed: 'Confirmed',
+        requested: 'Requests',
         held: 'Held',
         free: 'Free',
-        occupancy: '{percent}% occupied',
-        appointments: 'no appointments | 1 appointment | {count} appointments',
+        share: '{percent}% confirmed',
+        capacity: '{count} slots in the period',
         goToAgenda: 'Open the agenda'
       },
       activity: {
@@ -645,22 +802,67 @@ export default {
     },
 
     activity: {
-      'appointment-cancelled': '{patient} cancelled {service} on {when}',
-      'appointment-rescheduled': '{patient} moved to {when}',
+      'request-created': '{patient} asked for {when}',
+      'appointment-confirmed': '{patient} confirmed for {when}',
+      'registration-declared': 'Registered in CureMD: {patient}, {when}',
+      'change-requested': '{patient} to move from {was} to {when}',
+      'change-applied': 'Change applied in CureMD: {patient} now {when}',
+      'change-abandoned': 'Change dropped for {patient}; {when} stands',
+      'cancellation-requested': '{patient} cancelled {when} — still to remove from CureMD',
+      'cancellation-completed': 'Cancellation done in CureMD: {patient}, {when}',
+      'marked-unavailable': 'Closed as not available: {patient}, {when}',
+      'alternative-proposed': '{when} proposed to {patient}',
+      'alternative-accepted': '{patient} accepted {when}',
+      'note-added': 'Note added for {patient}',
+      'arrival-recorded': '{patient} arrived',
+      'room-assigned': '{patient} shown to {when}',
+      'room-corrected': '{patient}: room corrected to {when}',
+      'slip-print-requested': 'Care slip requested for {patient}',
+      'visit-finished': '{patient} finished their visit',
       'opening-detected': 'Slot free on {when} — no match on the waitlist | Slot free on {when} — 1 patient matches | Slot free on {when} — {count} patients match',
       'offer-sent': '{when} offered to {patient}',
       'offer-accepted': '{patient} accepted {when}',
       'offer-declined': '{patient} declined {when}',
       'offer-expired': 'The hold on {when} lapsed'
     },
-
     demo: {
       title: 'Demo controls',
       note: 'These are for the demonstration, not for a front desk.',
       load: 'Load sample scenario',
       loaded: 'Sample scenario loaded.',
-      openPrepared: 'Open the appointment to cancel',
-      preparedMissing: 'Load the sample scenario first.'
+      openRequest: 'Open the request to register',
+      openCancellation: 'Open the pending cancellation',
+      missing: 'Load the sample scenario first.'
+    }
+  },
+
+  slip: {
+    title: 'Care slip',
+    demoMark: 'DEMO — FICTIONAL DATA',
+    reference: 'Appointment reference',
+    patient: 'Patient',
+    appointment: 'Appointment',
+    arrived: 'Arrival time',
+    clinic: 'Clinic',
+    room: 'Room',
+    roomPending: 'To be assigned',
+    service: 'Appointment type',
+    curemdReference: 'CureMD reference',
+    print: 'Open the print dialog',
+    note: 'The sheet is A5 upright and prints readably on A4. Nothing is sent anywhere: your browser opens its own print dialog, where you can also save a PDF. Printing again changes nothing.',
+    languageLabel: 'Language of the sheet',
+    footer: 'Demonstration sheet. The doctor, the clinic and this appointment are invented. The boxes above are for writing in by hand; no observation on this sheet was measured or produced by software.',
+    vitals: {
+      title: 'Observations — to be filled in by hand',
+      bloodPressure: 'Blood pressure',
+      heartRate: 'Heart rate',
+      respiratoryRate: 'Respiratory rate',
+      temperature: 'Temperature',
+      oxygen: 'Oxygen saturation',
+      weight: 'Weight',
+      height: 'Height',
+      notes: 'Notes',
+      takenBy: 'Taken by (name or initials)'
     }
   },
 
@@ -669,7 +871,7 @@ export default {
     clinics: 'Clinics',
     practice: 'This demo',
     emergency: 'In a medical emergency call 911. This website is not monitored.',
-    disclaimer: 'Lorba Medical is a fictional practice built as a design demonstration. It is not a real medical provider, the clinicians do not exist, and no appointment booked here is real.',
+    disclaimer: 'Dr. Lorba is a fictional doctor and this site is a design demonstration. He is not a real medical provider, the clinics do not exist, and no appointment requested here is real.',
     credits: 'Image credits',
     reception: 'Reception demo'
   },

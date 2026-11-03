@@ -1,22 +1,23 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { locationById } from '@/data/locations'
-import { providerById } from '@/data/providers'
 import { serviceById } from '@/data/services'
 import { localized } from '@/i18n'
+import { canRecordArrival } from '@/services/careFlow'
 import { formatWallDate, formatWallTime } from '@/services/clinicTime'
 import type { Appointment } from '@/types'
+import AppIcon from '@/components/ui/AppIcon.vue'
 import StatusPill from './StatusPill.vue'
 
 defineProps<{ appointments: Appointment[]; selectedId: string | null; showDate?: boolean }>()
-const emit = defineEmits<{ open: [appointment: Appointment] }>()
+const emit = defineEmits<{ open: [appointment: Appointment]; arrival: [appointment: Appointment] }>()
 
-const { locale } = useI18n()
+const { t, locale } = useI18n()
 </script>
 
 <template>
   <ul class="rows">
-    <li v-for="appointment in appointments" :key="appointment.id">
+    <li v-for="appointment in appointments" :key="appointment.id" class="rows__item">
       <button
         class="row"
         :class="{ 'row--on': appointment.id === selectedId, 'row--off': appointment.status === 'cancelled' }"
@@ -37,14 +38,30 @@ const { locale } = useI18n()
           </span>
           <span class="row__meta">
             {{ localized(serviceById(appointment.serviceId)?.name) }} ·
-            {{ providerById(appointment.providerId)?.name }} ·
             {{ localized(locationById(appointment.locationId)?.name) }}
           </span>
         </span>
 
         <span class="row__ref">{{ appointment.reference }}</span>
-        <StatusPill :status="appointment.status" />
+        <span class="row__states">
+          <StatusPill kind="appointment" :status="appointment.status" />
+          <StatusPill kind="curemd" :status="appointment.curemd.status" />
+        </span>
       </button>
+
+      <!-- Checking in from the agenda itself, without opening the record first. -->
+      <button
+        v-if="canRecordArrival(appointment)"
+        class="arrive"
+        type="button"
+        @click="emit('arrival', appointment)"
+      >
+        <AppIcon name="log-in" :size="15" />
+        <span>{{ t('reception.arrival.action') }}</span>
+      </button>
+      <span v-else-if="appointment.visit" class="stage">
+        {{ t(`reception.stage.${appointment.visit.stage}`) }}
+      </span>
     </li>
   </ul>
 </template>
@@ -61,6 +78,51 @@ const { locale } = useI18n()
 
 .rows li + li {
   border-top: 1px solid var(--border);
+}
+
+.rows__item {
+  display: flex;
+  align-items: stretch;
+  gap: var(--s2);
+}
+
+.rows__item > .row {
+  flex: 1;
+  min-width: 0;
+}
+
+.arrive,
+.stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  align-self: center;
+  margin-right: var(--s4);
+  padding: 5px var(--s3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.arrive {
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--navy-700);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.arrive:hover {
+  border-color: var(--teal-500);
+  background: var(--teal-50);
+}
+
+.stage {
+  border: 1px solid transparent;
+  background: var(--navy-800);
+  color: #fff;
 }
 
 .row {
@@ -134,6 +196,13 @@ const { locale } = useI18n()
   color: var(--navy-400);
 }
 
+.row__states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s1);
+  justify-content: flex-end;
+}
+
 @media (max-width: 720px) {
   .row {
     grid-template-columns: 72px 1fr;
@@ -153,7 +222,7 @@ const { locale } = useI18n()
   .row__ref {
     grid-area: ref;
   }
-  .row :deep(.pill) {
+  .row__states {
     grid-area: status;
     justify-self: start;
   }

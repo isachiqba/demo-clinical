@@ -53,6 +53,17 @@ onBeforeUnmount(() => {
       </nav>
 
       <div class="header__end">
+        <!-- The front-desk side of the demo, reachable from every page rather than only
+             from the footer. Kept quiet so it never competes with booking. -->
+        <RouterLink
+          class="header__reception"
+          :to="{ name: 'reception' }"
+          :title="t('nav.reception')"
+          :aria-label="t('nav.reception')"
+        >
+          <AppIcon name="log-in" :size="15" />
+          <span class="header__reception-label">{{ t('nav.reception') }}</span>
+        </RouterLink>
         <LanguageSwitcher />
         <AppButton :to="{ name: 'book' }" icon-right="arrow-right">{{ t('nav.book') }}</AppButton>
       </div>
@@ -80,6 +91,9 @@ onBeforeUnmount(() => {
         <div class="sheet__end">
           <AppButton :to="{ name: 'book' }" size="lg" block icon-right="arrow-right">
             {{ t('nav.book') }}
+          </AppButton>
+          <AppButton :to="{ name: 'reception' }" variant="secondary" size="lg" block icon-left="log-in">
+            {{ t('nav.reception') }}
           </AppButton>
           <LanguageSwitcher />
         </div>
@@ -175,6 +189,47 @@ onBeforeUnmount(() => {
   height: 2px;
   border-radius: 2px;
   background: var(--teal-600);
+}
+
+/* Discreet on purpose: it is a way into the demo's other half, not a call to action. */
+.header__reception {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--navy-600);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.header__reception:hover {
+  background: var(--paper-deep);
+  color: var(--navy-800);
+}
+
+/*
+ * Between the widest layout and the point the menu takes over there is not room for the
+ * whole label beside the nav, the language switcher and the booking button — it pushed the
+ * header wider than the page. The icon carries it, and the link keeps its accessible name.
+ */
+@media (max-width: 1180px) {
+  .header__reception-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .header__reception {
+    padding: var(--s2);
+  }
 }
 
 .header__end {

@@ -1,192 +1,236 @@
 import { describe, expect, it } from 'vitest'
 import {
   LEAD_TIME_MINUTES,
+  dayCapacity,
   firstAvailable,
+  gridFor,
   isSlotOpen,
-  providerDayWindow,
+  searchDay,
   slotCounts,
   slotsForDay,
-  slotsForProviderDay
+  takenAt
 } from '@/services/availability'
 import { locationById } from '@/data/locations'
-import { minutesOf, weekdayOfKey, wallToInstant } from '@/services/clinicTime'
-import type { Appointment, Slot } from '@/types'
+import { minutesOf, minutesUntilWall, weekdayOfKey } from '@/services/clinicTime'
+import { SLOT_MINUTES } from '@/types'
+import type { Appointment, LocationId } from '@/types'
 
-/** A Monday well clear of "now", so lead time never interferes. */
+/** A Monday well clear of "now", so the lead-time rule never interferes. */
 const MONDAY = '2026-06-01'
 const NOW = new Date('2026-05-01T12:00:00.000Z')
 
+const empty = { appointments: [] as Appointment[], offers: [] }
+
 const base = {
   serviceId: 'primary-care' as const,
-  locationId: 'downtown' as const,
-  providerId: 'ap-elena-sandoval',
-  appointments: [] as Appointment[],
+  locationId: 'downtown' as LocationId,
+  dateKey: MONDAY,
+  state: empty,
   now: NOW
 }
 
-const appointmentFrom = (slot: Slot, overrides: Partial<Appointment> = {}): Appointment => ({
-  id: 'a1',
+const appointmentAt = (
+  locationId: LocationId,
+  startWall: string,
+  overrides: Partial<Appointment> = {}
+): Appointment => ({
+  id: `a-${locationId}-${startWall}`,
   reference: 'LM-TEST',
-  serviceId: slot.serviceId,
-  providerId: slot.providerId,
-  locationId: slot.locationId,
-  startWall: slot.startWall,
-  durationMinutes: slot.durationMinutes,
+  serviceId: 'primary-care',
+  locationId,
+  startWall,
   patientType: 'existing',
   patient: { firstName: 'A', lastName: 'B', email: 'a@example.com', phone: '', coverage: 'self-pay' },
   status: 'confirmed',
+  curemd: {
+    status: 'registered',
+    reference: null,
+    registered: { startWall, locationId, serviceId: 'primary-care', patientName: 'A B' },
+    declaredAtWall: '2026-05-01T09:00',
+    operator: 'Demo Reception'
+  },
+  pendingChange: null,
+  proposal: null,
+  version: 1,
   createdAtWall: '2026-05-01T09:00',
+  audit: [],
   ...overrides
 })
 
-describe('availability generation', () => {
-  it('is deterministic for the same provider, clinic and day', () => {
-    const first = slotsForProviderDay({ ...base, dateKey: MONDAY })
-    const second = slotsForProviderDay({ ...base, dateKey: MONDAY })
-    expect(first.map((slot) => slot.id)).toEqual(second.map((slot) => slot.id))
-    expect(first.length).toBeGreaterThan(0)
+describe('the ten-minute grid', () => {
+  it('offers starts every ten minutes', () => {
+    const grid = gridFor('downtown', MONDAY)
+    expect(grid.length).toBeGreaterThan(10)
+    for (let index = 1; index < grid.length; index += 1) {
+      const gap = minutesOf(grid[index]) - minutesOf(grid[index - 1])
+      // Ten minutes apart, except for the jump over the lunch hour.
+      expect(gap === SLOT_MINUTES || gap > SLOT_MINUTES).toBe(true)
+    }
+    expect(grid.every((start) => minutesOf(start) % SLOT_MINUTES === 0)).toBe(true)
   })
 
-  it('never returns a slot outside the clinics opening hours', () => {
+  it("stays inside the clinic's opening hours and skips lunch", () => {
     const clinic = locationById('downtown')!
     const hours = clinic.hours.find((entry) => entry.weekday === weekdayOfKey(MONDAY))!
-    for (const slot of slotsForProviderDay({ ...base, dateKey: MONDAY })) {
-      const start = minutesOf(slot.startWall)
-      expect(start).toBeGreaterThanOrEqual(hours.opensAt!)
-      expect(start + slot.durationMinutes).toBeLessThanOrEqual(hours.closesAt!)
+    for (const start of gridFor('downtown', MONDAY)) {
+      const minutes = minutesOf(start)
+      expect(minutes).toBeGreaterThanOrEqual(hours.opensAt!)
+      expect(minutes + SLOT_MINUTES).toBeLessThanOrEqual(hours.closesAt!)
+      expect(minutes >= 12 * 60 && minutes < 13 * 60).toBe(false)
     }
   })
 
-  it('returns nothing on a day the clinic is closed', () => {
-    // Westside is closed at weekends; 2026-06-06 is a Saturday.
-    expect(
-      slotsForProviderDay({
-        ...base,
-        locationId: 'westside',
-        providerId: 'ap-marcus-feld',
-        dateKey: '2026-06-06'
-      })
-    ).toHaveLength(0)
-  })
-
-  it('returns nothing for a clinician who does not work at that clinic', () => {
-    // Howard Brennan works at Northside and Westside, not Downtown.
-    expect(
-      slotsForProviderDay({ ...base, providerId: 'ap-howard-brennan', dateKey: MONDAY })
-    ).toHaveLength(0)
+  it('offers nothing on a day the clinic is closed', () => {
+    // 2026-06-07 is a Sunday; Westside is also closed on Saturdays.
+    expect(gridFor('downtown', '2026-06-07')).toHaveLength(0)
+    expect(gridFor('westside', '2026-06-06')).toHaveLength(0)
   })
 
   it('never offers a past time, nor one inside the lead-time window', () => {
-    const slots = slotsForProviderDay({ ...base, dateKey: '2026-06-01', now: new Date('2026-06-01T17:00:00.000Z') })
+    const slots = slotsForDay({ ...base, dateKey: '2026-06-01', now: new Date('2026-06-01T17:00:00.000Z') })
     for (const slot of slots) {
-      const minutesAhead = (wallToInstant(slot.startWall).getTime() - Date.parse('2026-06-01T17:00:00.000Z')) / 60_000
-      expect(minutesAhead).toBeGreaterThanOrEqual(LEAD_TIME_MINUTES)
+      const ahead = minutesUntilWall(slot.startWall, new Date('2026-06-01T17:00:00.000Z'))
+      expect(ahead).toBeGreaterThanOrEqual(LEAD_TIME_MINUTES)
     }
   })
+})
 
-  it('removes a slot once it is booked, and gives it back when cancelled', () => {
-    const open = slotsForProviderDay({ ...base, dateKey: MONDAY })
-    const target = open[1]
-
-    const booked = slotsForProviderDay({
-      ...base,
-      dateKey: MONDAY,
-      appointments: [appointmentFrom(target)]
-    })
-    expect(booked.map((slot) => slot.startWall)).not.toContain(target.startWall)
-    expect(booked).toHaveLength(open.length - 1)
-
-    const cancelled = slotsForProviderDay({
-      ...base,
-      dateKey: MONDAY,
-      appointments: [appointmentFrom(target, { status: 'cancelled' })]
-    })
-    expect(cancelled.map((slot) => slot.startWall)).toContain(target.startWall)
-    expect(cancelled).toHaveLength(open.length)
+describe('capacity', () => {
+  it('is one patient per slot by default, and comes from the clinic', () => {
+    expect(locationById('downtown')!.slotCapacity).toBe(1)
+    expect(dayCapacity('downtown', MONDAY)).toBe(gridFor('downtown', MONDAY).length)
   })
 
-  it('blocks an overlapping appointment, not only an identical start time', () => {
-    const open = slotsForProviderDay({ ...base, dateKey: MONDAY })
-    const target = open[0]
-    // A 45-minute appointment starting 10 minutes earlier straddles the slot.
-    const straddling = appointmentFrom(target, {
-      startWall: `${target.startWall.slice(0, 14)}${String(Number(target.startWall.slice(14, 16)) - 10).padStart(2, '0')}`,
-      durationMinutes: 45
-    })
-    const after = slotsForProviderDay({ ...base, dateKey: MONDAY, appointments: [straddling] })
-    expect(after.map((slot) => slot.startWall)).not.toContain(target.startWall)
-  })
+  it('counts a booking, a request and a pending move against the slot', () => {
+    const [first, second] = gridFor('downtown', MONDAY)
 
-  it('leaves the lunch hour alone', () => {
-    for (const slot of slotsForProviderDay({ ...base, dateKey: MONDAY })) {
-      const start = minutesOf(slot.startWall)
-      const end = start + slot.durationMinutes
-      expect(start < 13 * 60 && end > 12 * 60).toBe(false)
+    const booked = { appointments: [appointmentAt('downtown', first)], offers: [] }
+    expect(takenAt('downtown', first, booked)).toBe(1)
+    expect(isSlotOpen({ locationId: 'downtown', startWall: first }, booked, NOW)).toBe(false)
+
+    // A request holds the slot locally too, so the demo cannot take it twice.
+    const requested = {
+      appointments: [
+        appointmentAt('downtown', first, {
+          status: 'requested',
+          curemd: {
+            status: 'pending-registration',
+            reference: null,
+            registered: null,
+            declaredAtWall: null,
+            operator: null
+          }
+        })
+      ],
+      offers: []
     }
+    expect(isSlotOpen({ locationId: 'downtown', startWall: first }, requested, NOW)).toBe(false)
+
+    // A move that reception has not yet applied holds the *new* time as well as the old.
+    const moving = {
+      appointments: [
+        appointmentAt('downtown', first, {
+          curemd: {
+            status: 'change-pending',
+            reference: null,
+            registered: {
+              startWall: first,
+              locationId: 'downtown',
+              serviceId: 'primary-care',
+              patientName: 'A B'
+            },
+            declaredAtWall: '2026-05-01T09:00',
+            operator: 'Demo Reception'
+          },
+          pendingChange: {
+            startWall: second,
+            locationId: 'downtown',
+            requestedAtWall: '2026-05-01T10:00',
+            source: 'reception',
+            offerId: null
+          }
+        })
+      ],
+      offers: []
+    }
+    expect(isSlotOpen({ locationId: 'downtown', startWall: first }, moving, NOW)).toBe(false)
+    expect(isSlotOpen({ locationId: 'downtown', startWall: second }, moving, NOW)).toBe(false)
   })
 
-  it('offers each time once when searching across clinicians', () => {
-    const slots = slotsForDay({ ...base, providerId: 'any', dateKey: MONDAY })
+  it('frees the slot again once an appointment is cancelled', () => {
+    const [first] = gridFor('downtown', MONDAY)
+    const cancelled = {
+      appointments: [
+        appointmentAt('downtown', first, {
+          status: 'cancelled',
+          curemd: {
+            status: 'cancelled',
+            reference: null,
+            registered: null,
+            declaredAtWall: null,
+            operator: null
+          }
+        })
+      ],
+      offers: []
+    }
+    expect(isSlotOpen({ locationId: 'downtown', startWall: first }, cancelled, NOW)).toBe(true)
+  })
+
+  it('keeps the slot taken while a cancellation is only pending in CureMD', () => {
+    const [first] = gridFor('downtown', MONDAY)
+    const pending = {
+      appointments: [
+        appointmentAt('downtown', first, {
+          status: 'confirmed',
+          curemd: {
+            status: 'cancellation-pending',
+            reference: 'CMD-1',
+            registered: {
+              startWall: first,
+              locationId: 'downtown',
+              serviceId: 'primary-care',
+              patientName: 'A B'
+            },
+            declaredAtWall: '2026-05-01T09:00',
+            operator: 'Demo Reception'
+          }
+        })
+      ],
+      offers: []
+    }
+    expect(isSlotOpen({ locationId: 'downtown', startWall: first }, pending, NOW)).toBe(false)
+  })
+
+  it("does not count another clinic's booking against this one", () => {
+    const [first] = gridFor('downtown', MONDAY)
+    const elsewhere = { appointments: [appointmentAt('northside', first)], offers: [] }
+    expect(takenAt('downtown', first, elsewhere)).toBe(0)
+  })
+})
+
+describe('searching', () => {
+  it('returns every clinic in order when none is chosen', () => {
+    const slots = searchDay({ ...base, locationId: 'any' })
     const starts = slots.map((slot) => slot.startWall)
-    expect(new Set(starts).size).toBe(starts.length)
     expect(starts).toEqual([...starts].sort())
+    expect(new Set(slots.map((slot) => slot.locationId)).size).toBeGreaterThan(1)
   })
 
-  it('finds more across any clinic than at one of them', () => {
-    const one = slotsForDay({ ...base, providerId: 'any', dateKey: MONDAY })
-    const all = slotsForDay({ ...base, locationId: 'any', providerId: 'any', dateKey: MONDAY })
-    expect(all.length).toBeGreaterThanOrEqual(one.length)
+  it('counts what it would list for each day', () => {
+    const counts = slotCounts({ ...base, locationId: 'any', fromKey: MONDAY, days: 4 })
+    for (const [dateKey, count] of Object.entries(counts)) {
+      expect(searchDay({ ...base, locationId: 'any', dateKey }).length).toBe(count)
+    }
   })
 
-  it('computes first availability from the data, not a fixed date', () => {
-    const slot = firstAvailable({ ...base, fromKey: MONDAY })
+  it('finds the first opening from the data, not a fixed date', () => {
+    const slot = firstAvailable({ ...base, locationId: 'any', fromKey: MONDAY })
     expect(slot).not.toBeNull()
-    expect(slot!.startWall >= MONDAY).toBe(true)
-
-    // It is genuinely the earliest: every earlier day holds nothing.
-    const counts = slotCounts({ ...base, fromKey: MONDAY, days: 14 })
-    const firstDayWithSlots = Object.keys(counts)
+    const counts = slotCounts({ ...base, locationId: 'any', fromKey: MONDAY, days: 10 })
+    const firstDay = Object.keys(counts)
       .sort()
       .find((key) => counts[key] > 0)
-    expect(slot!.startWall.slice(0, 10)).toBe(firstDayWithSlots)
-  })
-
-  it('counts the openings it would list for each day', () => {
-    const counts = slotCounts({ ...base, fromKey: MONDAY, days: 5 })
-    for (const [dateKey, count] of Object.entries(counts)) {
-      expect(slotsForDay({ ...base, dateKey }).length).toBe(count)
-    }
-  })
-
-  it('validates a single slot against the live appointments', () => {
-    const slot = slotsForProviderDay({ ...base, dateKey: MONDAY })[0]
-    expect(isSlotOpen(slot, [], [], NOW)).toBe(true)
-    expect(isSlotOpen(slot, [appointmentFrom(slot)], [], NOW)).toBe(false)
-    expect(isSlotOpen(slot, [appointmentFrom(slot, { status: 'cancelled' })], [], NOW)).toBe(true)
-  })
-
-  it('treats a held slot as taken, and frees it when the hold goes', () => {
-    const open = slotsForProviderDay({ ...base, dateKey: MONDAY })
-    const held = open[1]
-
-    expect(isSlotOpen(held, [], [held], NOW)).toBe(false)
-    expect(isSlotOpen(held, [], [], NOW)).toBe(true)
-
-    const withHold = slotsForProviderDay({ ...base, dateKey: MONDAY, holds: [held] })
-    expect(withHold.map((slot) => slot.startWall)).not.toContain(held.startWall)
-    expect(withHold).toHaveLength(open.length - 1)
-  })
-
-  it('measures the minutes a clinician offers at a clinic on a day', () => {
-    const window = providerDayWindow('ap-elena-sandoval', 'downtown', MONDAY)
-    expect(window).not.toBeNull()
-    expect(window!.minutes).toBeGreaterThan(0)
-    // The lunch hour is not capacity.
-    expect(window!.minutes).toBeLessThanOrEqual(window!.endMinutes - window!.startMinutes)
-
-    // A clinician who does not work there offers nothing.
-    expect(providerDayWindow('ap-howard-brennan', 'downtown', MONDAY)).toBeNull()
-    // Nor does anyone on a Sunday.
-    expect(providerDayWindow('ap-elena-sandoval', 'downtown', '2026-06-07')).toBeNull()
+    expect(slot!.startWall.slice(0, 10)).toBe(firstDay)
   })
 })

@@ -1,7 +1,6 @@
 import { computed, ref, watch } from 'vue'
 import { defineStore } from 'pinia'
 import { isLocationId } from '@/data/locations'
-import { providerById, providersFor } from '@/data/providers'
 import { isServiceId, serviceById } from '@/data/services'
 import { todayKey } from '@/services/clinicTime'
 import { STORAGE_KEYS, storage } from '@/services/storage'
@@ -13,7 +12,6 @@ import type {
   LocationChoice,
   PatientDetails,
   PatientType,
-  ProviderChoice,
   ServiceId,
   Slot
 } from '@/types'
@@ -23,7 +21,6 @@ export interface BookingDraft {
   serviceId: ServiceId | null
   patientType: PatientType | null
   locationId: LocationChoice | null
-  providerId: ProviderChoice | null
   dateKey: string
   slot: Slot | null
   patient: PatientDetails
@@ -41,7 +38,6 @@ const emptyDraft = (): BookingDraft => ({
   serviceId: null,
   patientType: null,
   locationId: null,
-  providerId: null,
   dateKey: todayKey(),
   slot: null,
   patient: emptyPatient()
@@ -51,13 +47,12 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 /** Restores a saved draft, dropping anything that is no longer a valid choice. */
 const restoreDraft = (): BookingDraft => {
-  const saved = storage.read<Partial<BookingDraft>>(STORAGE_KEYS.draft, {})
+  // Versioned for the same reason the demo state is: a half-understood draft from an
+  // older build is worse than no draft at all.
+  const saved = storage.readVersioned<Partial<BookingDraft>>(STORAGE_KEYS.draft, {})
   const draft = { ...emptyDraft(), ...saved, patient: { ...emptyPatient(), ...saved.patient } }
   if (!isServiceId(draft.serviceId)) draft.serviceId = null
   if (draft.locationId !== 'any' && !isLocationId(draft.locationId)) draft.locationId = null
-  if (draft.providerId !== 'any' && draft.providerId && !providerById(draft.providerId)) {
-    draft.providerId = null
-  }
   return draft
 }
 
@@ -68,14 +63,9 @@ export const useBookingStore = defineStore('booking', () => {
   const showErrors = ref(false)
   const lastConfirmed = ref<Appointment | null>(null)
 
-  watch(draft, (value) => storage.write(STORAGE_KEYS.draft, value), { deep: true })
+  watch(draft, (value) => storage.writeVersioned(STORAGE_KEYS.draft, value), { deep: true })
 
   const service = computed(() => (draft.value.serviceId ? serviceById(draft.value.serviceId) : undefined))
-  const provider = computed(() =>
-    draft.value.providerId && draft.value.providerId !== 'any'
-      ? providerById(draft.value.providerId)
-      : undefined
-  )
 
   // --- validation ------------------------------------------------------------
 
@@ -94,7 +84,7 @@ export const useBookingStore = defineStore('booking', () => {
 
   const stepComplete = computed<Record<BookingStep, boolean>>(() => ({
     visit: Boolean(draft.value.serviceId && draft.value.patientType),
-    place: Boolean(draft.value.locationId && draft.value.providerId),
+    place: Boolean(draft.value.locationId),
     when: Boolean(draft.value.slot),
     details: detailsValid.value
   }))
@@ -125,11 +115,6 @@ export const useBookingStore = defineStore('booking', () => {
     if (draft.value.serviceId === serviceId) return
     draft.value.serviceId = serviceId
     clearSlot()
-    // Keep a chosen clinician only if they still offer the new service.
-    const chosen = draft.value.providerId
-    if (chosen && chosen !== 'any' && !providerById(chosen)?.serviceIds.includes(serviceId)) {
-      draft.value.providerId = null
-    }
   }
 
   const selectPatientType = (patientType: PatientType): void => {
@@ -139,21 +124,6 @@ export const useBookingStore = defineStore('booking', () => {
   const selectLocation = (locationId: LocationChoice): void => {
     if (draft.value.locationId === locationId) return
     draft.value.locationId = locationId
-    clearSlot()
-    const chosen = draft.value.providerId
-    if (
-      chosen &&
-      chosen !== 'any' &&
-      locationId !== 'any' &&
-      !providerById(chosen)?.locationIds.includes(locationId)
-    ) {
-      draft.value.providerId = null
-    }
-  }
-
-  const selectProvider = (providerId: ProviderChoice): void => {
-    if (draft.value.providerId === providerId) return
-    draft.value.providerId = providerId
     clearSlot()
   }
 
@@ -188,23 +158,13 @@ export const useBookingStore = defineStore('booking', () => {
     }
   }
 
-  /** Clinicians the current service and clinic allow. */
-  const eligibleProviders = computed(() => {
-    if (!draft.value.serviceId) return []
-    return providersFor(
-      draft.value.serviceId,
-      draft.value.locationId && draft.value.locationId !== 'any'
-        ? draft.value.locationId
-        : undefined
-    )
-  })
-
   // --- submission ------------------------------------------------------------
 
-  const confirm = async (): Promise<Appointment | null> => {
+  /** The public site never books: it asks the clinic for a time. */
+  const submitRequest = async (): Promise<Appointment | null> => {
     if (submitting.value) return null
-    const { serviceId, locationId, providerId, slot, patientType, patient } = draft.value
-    if (!serviceId || !locationId || !providerId || !slot || !patientType) return null
+    const { serviceId, locationId, slot, patientType, patient } = draft.value
+    if (!serviceId || !locationId || !slot || !patientType) return null
     if (!detailsValid.value) {
       showErrors.value = true
       return null
@@ -214,10 +174,9 @@ export const useBookingStore = defineStore('booking', () => {
     errorKey.value = null
     try {
       const schedule = useScheduleStore()
-      const result = await schedule.book({
+      const result = await schedule.requestAppointment({
         serviceId,
         locationId,
-        providerId,
         slot,
         patientType,
         patient: { ...patient, coverage: patient.coverage || 'self-pay' }
@@ -247,8 +206,6 @@ export const useBookingStore = defineStore('booking', () => {
   return {
     draft,
     service,
-    provider,
-    eligibleProviders,
     submitting,
     errorKey,
     showErrors,
@@ -261,13 +218,12 @@ export const useBookingStore = defineStore('booking', () => {
     selectService,
     selectPatientType,
     selectLocation,
-    selectProvider,
     selectDate,
     selectSlot,
     updatePatient,
     useSampleDetails,
     applyPreset,
-    confirm,
+    submitRequest,
     reset
   }
 })

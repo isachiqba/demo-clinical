@@ -1,10 +1,18 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { schedulingApi, type OfferResponse, type WaitlistInput } from '@/services/schedulingApi'
+import {
+  schedulingApi,
+  type Guarded,
+  type OfferResponse,
+  type RegistrationInput,
+  type RequestInput,
+  type WaitlistInput
+} from '@/services/schedulingApi'
 import type {
   ActivityEvent,
   Appointment,
   AppointmentStatus,
+  CuremdTask,
   DemoState,
   Offer,
   Opening,
@@ -12,9 +20,10 @@ import type {
   WaitlistEntry,
   WaitlistPreferences
 } from '@/types'
-import type { BookingInput } from '@/services/schedulingApi'
 import { dateKeyOf, nowWall } from '@/services/clinicTime'
-import { candidatesForSlot, heldSlots } from '@/services/waitlist'
+import { pendingTaskOf } from '@/services/curemd'
+import { candidatesForSlot } from '@/services/waitlist'
+import { isFinished, isPresent } from '@/services/careFlow'
 
 const emptyState = (): DemoState => ({
   appointments: [],
@@ -25,10 +34,9 @@ const emptyState = (): DemoState => ({
 })
 
 /**
- * The one place the demo's data lives. The public booking flow, the reception agenda, the
- * waitlist and the overview all read and write through here, so a booking made on the
- * website shows up at the front desk immediately and a cancellation there puts the slot
- * back on the website.
+ * The one place the demo's data lives. The public site, the agenda, the CureMD inbox, the
+ * waitlist and the overview all read and write through here, so a request made on the
+ * website is at the front desk immediately and a cancellation declared there feeds back.
  */
 export const useScheduleStore = defineStore('schedule', () => {
   const state = ref<DemoState>(emptyState())
@@ -39,7 +47,7 @@ export const useScheduleStore = defineStore('schedule', () => {
   const waitlist = computed(() => state.value.waitlist)
   const offers = computed(() => state.value.offers)
   const openings = computed(() => state.value.openings)
-  const activity = computed(() => state.value.activity)
+  const activity = computed<ActivityEvent[]>(() => state.value.activity)
 
   const refresh = async (): Promise<void> => {
     state.value = await schedulingApi.getState()
@@ -66,28 +74,30 @@ export const useScheduleStore = defineStore('schedule', () => {
   const entryById = (id: string): WaitlistEntry | undefined =>
     waitlist.value.find((entry) => entry.id === id)
 
-  const openOpenings = computed(() =>
-    openings.value.filter((opening) => opening.status === 'open')
+  /** Everything waiting on reception to do something by hand in CureMD. */
+  const curemdQueue = computed(() =>
+    appointments.value
+      .map((appointment) => ({ appointment, task: pendingTaskOf(appointment) }))
+      .filter((item): item is { appointment: Appointment; task: CuremdTask } => item.task !== null)
   )
 
+  const taskCounts = computed(() => ({
+    registration: curemdQueue.value.filter((item) => item.task === 'registration').length,
+    change: curemdQueue.value.filter((item) => item.task === 'change').length,
+    cancellation: curemdQueue.value.filter((item) => item.task === 'cancellation').length,
+    total: curemdQueue.value.length
+  }))
+
+  const openOpenings = computed(() => openings.value.filter((opening) => opening.status === 'open'))
   const pendingOffers = computed(() => offers.value.filter((offer) => offer.status === 'pending'))
 
   const offerForOpening = (openingId: string): Offer | undefined =>
     pendingOffers.value.find((offer) => offer.openingId === openingId)
 
-  const offerForEntry = (entryId: string): Offer | undefined =>
-    pendingOffers.value.find((offer) => offer.entryId === entryId)
-
-  const recentActivity = computed<ActivityEvent[]>(() => activity.value)
-
-  /** How many people on the list a freed slot suits, worked out from the live state. */
+  /** How many people on the list a freed slot suits, from the live state. */
   const matchesForOpening = (opening: Opening): number =>
-    candidatesForSlot(waitlist.value, opening.slot, {
-      appointments: appointments.value,
-      holds: heldSlots(offers.value, nowWall())
-    }).length
+    candidatesForSlot(waitlist.value, opening.slot, { appointments: appointments.value }).length
 
-  /** Everyone the open slots between them would suit. */
   const totalMatches = computed(() =>
     openOpenings.value.reduce((total, opening) => total + matchesForOpening(opening), 0)
   )
@@ -104,11 +114,65 @@ export const useScheduleStore = defineStore('schedule', () => {
     }
   }
 
-  const book = (input: BookingInput) => run(() => schedulingApi.book(input))
-  const reschedule = (id: string, slot: Slot) => run(() => schedulingApi.reschedule(id, slot))
-  const setStatus = (id: string, status: AppointmentStatus) =>
-    run(() => schedulingApi.setStatus(id, status))
-  const cancel = (id: string) => setStatus(id, 'cancelled')
+  const requestAppointment = (input: RequestInput) =>
+    run(() => schedulingApi.requestAppointment(input))
+
+  const declareRegistration = (id: string, input: RegistrationInput) =>
+    run(() => schedulingApi.declareRegistration(id, input))
+  const confirmAppointment = (id: string, guard?: Guarded) =>
+    run(() => schedulingApi.confirmAppointment(id, guard))
+  const requestChange = (
+    id: string,
+    slot: Pick<Slot, 'locationId' | 'startWall'>,
+    guard?: Guarded & { source?: 'reception' | 'waitlist'; offerId?: string | null }
+  ) => run(() => schedulingApi.requestChange(id, slot, guard))
+  const declareChangeApplied = (id: string, guard?: Guarded & { curemdReference?: string | null }) =>
+    run(() => schedulingApi.declareChangeApplied(id, guard))
+  const abandonChange = (id: string, guard?: Guarded) =>
+    run(() => schedulingApi.abandonChange(id, guard))
+  const requestCancellation = (id: string, guard?: Guarded) =>
+    run(() => schedulingApi.requestCancellation(id, guard))
+  const declareCancellationDone = (id: string, guard?: Guarded) =>
+    run(() => schedulingApi.declareCancellationDone(id, guard))
+  const markUnavailable = (id: string, guard?: Guarded) =>
+    run(() => schedulingApi.markUnavailable(id, guard))
+  const proposeAlternative = (
+    id: string,
+    slot: Pick<Slot, 'locationId' | 'startWall'>,
+    guard?: Guarded
+  ) => run(() => schedulingApi.proposeAlternative(id, slot, guard))
+  const acceptProposal = (id: string, guard?: Guarded) =>
+    run(() => schedulingApi.acceptProposal(id, guard))
+  const setAttendance = (
+    id: string,
+    status: Extract<AppointmentStatus, 'arrived' | 'completed'>,
+    guard?: Guarded
+  ) => run(() => schedulingApi.setAttendance(id, status, guard))
+  const addNote = (id: string, note: string, guard?: Guarded) =>
+    run(() => schedulingApi.addNote(id, note, guard))
+
+  // --- once the patient is in the building ---
+  const recordArrival = (id: string, roomId: string | null, guard?: Guarded) =>
+    run(() => schedulingApi.recordArrival(id, roomId, guard))
+  const correctRoom = (id: string, roomId: string | null, guard?: Guarded) =>
+    run(() => schedulingApi.correctRoom(id, roomId, guard))
+  const finishVisit = (id: string, guard?: Guarded) =>
+    run(() => schedulingApi.finishVisit(id, guard))
+  const noteSlipRequested = (id: string) => run(() => schedulingApi.noteSlipRequested(id))
+
+  /** Everyone currently in the building, earliest arrival first. */
+  const inClinic = computed(() =>
+    state.value.appointments
+      .filter(isPresent)
+      .sort((a, b) => a.visit!.arrivedAtWall.localeCompare(b.visit!.arrivedAtWall))
+  )
+
+  /** Visits that have been and gone, most recently finished first. */
+  const finishedVisits = computed(() =>
+    state.value.appointments
+      .filter(isFinished)
+      .sort((a, b) => (b.visit!.leftAtWall ?? '').localeCompare(a.visit!.leftAtWall ?? ''))
+  )
 
   const joinWaitlist = (input: WaitlistInput) => run(() => schedulingApi.joinWaitlist(input))
   const withdrawFromWaitlist = (id: string) => run(() => schedulingApi.withdrawFromWaitlist(id))
@@ -126,16 +190,25 @@ export const useScheduleStore = defineStore('schedule', () => {
     run(async () => {
       await schedulingApi.loadScenario()
     })
-
   const resetDemoData = () =>
     run(async () => {
       await schedulingApi.reset()
     })
 
-  const totals = computed(() => ({
-    all: appointments.value.length,
-    active: appointments.value.filter((appointment) => appointment.status !== 'cancelled').length
-  }))
+  /** Minutes a CureMD task has been sitting in the inbox. */
+  const taskAgeMinutes = (appointment: Appointment): number => {
+    const task = pendingTaskOf(appointment)
+    if (!task) return 0
+    const since =
+      task === 'registration'
+        ? appointment.createdAtWall
+        : task === 'change'
+          ? (appointment.pendingChange?.requestedAtWall ?? appointment.createdAtWall)
+          : (appointment.audit.find((entry) => entry.kind === 'cancellation-requested')?.atWall ??
+            appointment.createdAtWall)
+    const stamp = nowWall()
+    return Math.max(0, Math.round((Date.parse(`${stamp}:00`) - Date.parse(`${since}:00`)) / 60000))
+  }
 
   return {
     state,
@@ -143,14 +216,16 @@ export const useScheduleStore = defineStore('schedule', () => {
     waitlist,
     offers,
     openings,
-    activity: recentActivity,
+    activity,
+    curemdQueue,
+    taskCounts,
     openOpenings,
     pendingOffers,
     matchesForOpening,
     totalMatches,
+    taskAgeMinutes,
     ready,
     working,
-    totals,
     refresh,
     ensureLoaded,
     byReference,
@@ -158,11 +233,25 @@ export const useScheduleStore = defineStore('schedule', () => {
     onDate,
     entryById,
     offerForOpening,
-    offerForEntry,
-    book,
-    reschedule,
-    setStatus,
-    cancel,
+    requestAppointment,
+    declareRegistration,
+    confirmAppointment,
+    requestChange,
+    declareChangeApplied,
+    abandonChange,
+    requestCancellation,
+    declareCancellationDone,
+    markUnavailable,
+    proposeAlternative,
+    acceptProposal,
+    setAttendance,
+    addNote,
+    inClinic,
+    finishedVisits,
+    recordArrival,
+    correctRoom,
+    finishVisit,
+    noteSlipRequested,
     joinWaitlist,
     withdrawFromWaitlist,
     updateWaitlistPreferences,
@@ -174,5 +263,3 @@ export const useScheduleStore = defineStore('schedule', () => {
     resetDemoData
   }
 })
-
-export type { Opening, Offer, WaitlistEntry }

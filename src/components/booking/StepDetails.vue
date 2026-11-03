@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { locationById } from '@/data/locations'
-import { providerById } from '@/data/providers'
 import { localized } from '@/i18n'
 import { formatWallDate, formatWallTime, zoneAbbreviation } from '@/services/clinicTime'
 import { useBookingStore } from '@/stores/booking'
@@ -46,14 +45,8 @@ const summary = computed(() => {
     {
       key: 'service',
       label: t('confirmation.appointment'),
-      value: `${localized(booking.service?.name)} · ${t('common.minutes', { count: current.durationMinutes })}`,
+      value: localized(booking.service?.name),
       step: 'visit' as BookingStep
-    },
-    {
-      key: 'clinician',
-      label: t('confirmation.clinician'),
-      value: providerById(current.providerId)?.name ?? '',
-      step: 'place' as BookingStep
     },
     {
       key: 'clinic',
@@ -196,6 +189,7 @@ const summary = computed(() => {
 
     <section v-if="slot" class="review">
       <h2 class="review__title">{{ t('booking.details.review') }}</h2>
+      <p class="review__subject">{{ t('booking.when.subjectToConfirmation') }}</p>
       <dl class="review__list">
         <div v-for="row in summary" :key="row.key" class="review__row">
           <div>
@@ -307,7 +301,13 @@ const summary = computed(() => {
 
 .review__title {
   font-size: var(--text-xl);
-  margin-bottom: var(--s2);
+}
+
+.review__subject {
+  margin: var(--s2) 0 var(--s1);
+  font-size: var(--text-sm);
+  color: var(--caution-fg);
+  font-weight: 500;
 }
 
 .review__list {

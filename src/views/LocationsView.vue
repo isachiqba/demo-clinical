@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
+import { blocksAt } from '@/data/doctor'
 import { locations } from '@/data/locations'
 import { localized } from '@/i18n'
 import { formatClock, todayKey, weekdayOfKey, nowWall, minutesOf } from '@/services/clinicTime'
@@ -12,6 +13,20 @@ import type { ClinicLocation } from '@/types'
 
 const { t, locale } = useI18n()
 
+/**
+ * The doctor's consulting hours at one clinic, which are not the same thing as the
+ * clinic's opening hours: the doors can be open on a day he is at another site.
+ */
+const consulting = (location: ClinicLocation) =>
+  [1, 2, 3, 4, 5, 6, 0]
+    .map((weekday) => ({
+      weekday,
+      sessions: blocksAt(weekday, location.id).map(
+        (block) => `${formatClock(block.startsAt, locale.value)}–${formatClock(block.endsAt, locale.value)}`
+      )
+    }))
+    .filter((day) => day.sessions.length > 0)
+
 /** Open right now, judged in clinic time rather than the visitor's. */
 const isOpenNow = (location: ClinicLocation): boolean => {
   const today = location.hours.find((entry) => entry.weekday === weekdayOfKey(todayKey()))
@@ -22,7 +37,7 @@ const isOpenNow = (location: ClinicLocation): boolean => {
 </script>
 
 <template>
-  <PageHeader :title="t('locations.title')" :lede="t('locations.lede')" />
+  <PageHeader :title="t('locations.title')" />
 
   <section class="band">
     <div class="page-width">
@@ -69,6 +84,17 @@ const isOpenNow = (location: ClinicLocation): boolean => {
                     </span>
                   </li>
                 </ul>
+              </section>
+
+              <section>
+                <h3 class="clinic__label">{{ t('locations.consulting') }}</h3>
+                <ul class="hours">
+                  <li v-for="day in consulting(location)" :key="day.weekday">
+                    <span>{{ t(`locations.days.${day.weekday}`) }}</span>
+                    <span class="hours__on">{{ day.sessions.join(' · ') }}</span>
+                  </li>
+                </ul>
+                <p class="clinic__text clinic__text--tight">{{ t('locations.consultingNote') }}</p>
               </section>
 
               <section>
@@ -167,9 +193,15 @@ const isOpenNow = (location: ClinicLocation): boolean => {
   line-height: 1.6;
 }
 
+.clinic__text--tight {
+  margin-top: var(--s3);
+  font-size: var(--text-sm);
+  color: var(--text-soft);
+}
+
 .clinic__cols {
   display: grid;
-  grid-template-columns: minmax(200px, 0.8fr) 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: var(--s6);
   margin: var(--s6) 0;
   padding-top: var(--s5);

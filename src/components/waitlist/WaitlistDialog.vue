@@ -2,7 +2,6 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { locations } from '@/data/locations'
-import { providersFor } from '@/data/providers'
 import { services } from '@/data/services'
 import { localized } from '@/i18n'
 import { addDaysToKey, todayKey } from '@/services/clinicTime'
@@ -23,7 +22,6 @@ const props = defineProps<{
   preset: {
     serviceId: ServiceId | null
     locationId: LocationId | 'any' | null
-    providerId: string | 'any' | null
     patient?: PatientDetails
     /** The booking this entry would replace, when the patient already has one. */
     linkedAppointmentId?: string | null
@@ -41,7 +39,6 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 const serviceId = ref<ServiceId>('primary-care')
 const clinicIds = ref<LocationId[]>([])
-const providerId = ref<string>('any')
 const fromKey = ref(todayKey())
 const toKey = ref(addDaysToKey(todayKey(), 30))
 const weekdays = ref<number[]>([1, 2, 3, 4, 5])
@@ -72,7 +69,6 @@ watch(
       props.preset.locationId && props.preset.locationId !== 'any'
         ? [props.preset.locationId]
         : locations.map((location) => location.id)
-    providerId.value = props.preset.providerId ?? 'any'
     fromKey.value = todayKey()
     toKey.value = props.preset.untilKey ?? addDaysToKey(todayKey(), 30)
     language.value = locale.value as Locale
@@ -80,17 +76,6 @@ watch(
   },
   { immediate: true }
 )
-
-const eligibleProviders = computed(() => providersFor(serviceId.value))
-
-/** A clinician is only offered while every clinic they do not work at is unticked. */
-watch([serviceId, clinicIds], () => {
-  if (providerId.value === 'any') return
-  const provider = eligibleProviders.value.find((item) => item.id === providerId.value)
-  const stillPossible =
-    provider && clinicIds.value.some((id) => provider.locationIds.includes(id))
-  if (!stillPossible) providerId.value = 'any'
-})
 
 const toggle = <T,>(list: T[], value: T): T[] =>
   list.includes(value) ? list.filter((item) => item !== value) : [...list, value]
@@ -137,7 +122,6 @@ const submit = async (): Promise<void> => {
       preferences: {
         serviceId: serviceId.value,
         locationIds: [...clinicIds.value],
-        providerId: providerId.value,
         fromKey: fromKey.value,
         toKey: toKey.value,
         weekdays: [...weekdays.value].sort(),
@@ -202,15 +186,6 @@ const lede = computed(() =>
         </div>
         <p v-if="errorFor('clinics')" class="group__error">{{ errorFor('clinics') }}</p>
       </fieldset>
-
-      <AppField v-slot="{ id }" :label="t('waitlist.clinician')">
-        <select :id="id" v-model="providerId">
-          <option value="any">{{ t('waitlist.anyClinician') }}</option>
-          <option v-for="provider in eligibleProviders" :key="provider.id" :value="provider.id">
-            {{ provider.name }}
-          </option>
-        </select>
-      </AppField>
 
       <fieldset class="group">
         <legend class="group__legend">{{ t('waitlist.dates') }}</legend>

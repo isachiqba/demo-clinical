@@ -9,6 +9,7 @@ const { t } = useI18n()
   <section class="hero">
     <div class="page-width hero__grid">
       <div class="hero__text">
+        <p class="hero__kicker">{{ t('home.hero.kicker') }}</p>
         <h1 class="hero__title">{{ t('home.hero.title') }}</h1>
         <p class="hero__body">{{ t('home.hero.body') }}</p>
 
@@ -16,11 +17,12 @@ const { t } = useI18n()
           <AppButton :to="{ name: 'book' }" size="lg" icon-right="arrow-right">
             {{ t('home.hero.book') }}
           </AppButton>
-          <AppButton :to="{ name: 'care' }" variant="secondary" size="lg">
-            {{ t('home.hero.services') }}
+          <AppButton :to="{ name: 'team' }" variant="secondary" size="lg">
+            {{ t('home.hero.meet') }}
           </AppButton>
         </div>
 
+        <p class="hero__clinics">{{ t('home.hero.clinics') }}</p>
         <p class="hero__languages">{{ t('home.hero.languages') }}</p>
       </div>
 
@@ -32,6 +34,7 @@ const { t } = useI18n()
           height="1200"
           fetchpriority="high"
         />
+        <figcaption class="illustrative">{{ t('demo.illustrativeShort') }}</figcaption>
       </figure>
     </div>
   </section>
@@ -48,6 +51,15 @@ const { t } = useI18n()
   grid-template-columns: 1fr 1.05fr;
   gap: var(--s9);
   align-items: center;
+}
+
+.hero__kicker {
+  margin-bottom: var(--s3);
+  font-size: var(--text-2xs);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal-700);
 }
 
 .hero__title {
@@ -71,11 +83,18 @@ const { t } = useI18n()
   margin-top: var(--s7);
 }
 
+.hero__clinics {
+  margin-top: var(--s5);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--navy-700);
+}
+
 .hero__languages {
   display: flex;
   align-items: center;
   gap: var(--s2);
-  margin-top: var(--s5);
+  margin-top: var(--s2);
   font-size: var(--text-sm);
   color: var(--text-soft);
 }
@@ -93,6 +112,10 @@ const { t } = useI18n()
   overflow: hidden;
   box-shadow: var(--shadow-md);
   background: var(--paper-deep);
+}
+
+.hero__figure figcaption {
+  margin-top: var(--s2);
 }
 
 .hero__figure img {

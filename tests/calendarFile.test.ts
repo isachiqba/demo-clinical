@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { buildAppointmentIcs } from '@/services/calendarFile'
+import { buildAppointmentIcs, canExportIcs } from '@/services/calendarFile'
 import type { Appointment } from '@/types'
 
-const appointment = (startWall: string): Appointment => ({
+const appointment = (startWall: string, overrides: Partial<Appointment> = {}): Appointment => ({
   id: 'apt-1',
   reference: 'LM-AC34',
   serviceId: 'primary-care',
-  providerId: 'ap-elena-sandoval',
   locationId: 'downtown',
   startWall,
-  durationMinutes: 30,
   patientType: 'new',
   patient: {
     firstName: 'Sam',
@@ -19,7 +17,24 @@ const appointment = (startWall: string): Appointment => ({
     coverage: 'insurance'
   },
   status: 'confirmed',
-  createdAtWall: '2026-01-02T10:00'
+  curemd: {
+    status: 'registered',
+    reference: 'CMD-1',
+    registered: {
+      startWall,
+      locationId: 'downtown',
+      serviceId: 'primary-care',
+      patientName: 'Sam Rivera'
+    },
+    declaredAtWall: '2026-01-02T11:00',
+    operator: 'Demo Reception'
+  },
+  pendingChange: null,
+  proposal: null,
+  version: 3,
+  createdAtWall: '2026-01-02T10:00',
+  audit: [],
+  ...overrides
 })
 
 const lineOf = (ics: string, prefix: string): string =>
@@ -37,13 +52,13 @@ describe('calendar file', () => {
   it('converts winter clinic time to UTC correctly (EST)', () => {
     const ics = buildAppointmentIcs(appointment('2026-01-14T09:00'), 'en')
     expect(lineOf(ics, 'DTSTART:')).toBe('DTSTART:20260114T140000Z')
-    expect(lineOf(ics, 'DTEND:')).toBe('DTEND:20260114T143000Z')
+    expect(lineOf(ics, 'DTEND:')).toBe('DTEND:20260114T141000Z')
   })
 
   it('converts summer clinic time to UTC correctly (EDT)', () => {
     const ics = buildAppointmentIcs(appointment('2026-07-14T09:00'), 'en')
     expect(lineOf(ics, 'DTSTART:')).toBe('DTSTART:20260714T130000Z')
-    expect(lineOf(ics, 'DTEND:')).toBe('DTEND:20260714T133000Z')
+    expect(lineOf(ics, 'DTEND:')).toBe('DTEND:20260714T131000Z')
   })
 
   it('marks the event as a demo in both languages', () => {
@@ -56,6 +71,53 @@ describe('calendar file', () => {
     }
     expect(buildAppointmentIcs(appointment('2026-05-05T11:20'), 'es')).toContain('DEMOSTRACIÓN')
     expect(buildAppointmentIcs(appointment('2026-05-05T11:20'), 'en')).toContain('DEMONSTRATION')
+  })
+
+  it('is offered only for an appointment the clinic has confirmed', () => {
+    expect(canExportIcs(appointment('2026-05-05T11:20'))).toBe(true)
+
+    // A request is not an appointment yet.
+    expect(
+      canExportIcs(
+        appointment('2026-05-05T11:20', {
+          status: 'requested',
+          curemd: {
+            status: 'pending-registration',
+            reference: null,
+            registered: null,
+            declaredAtWall: null,
+            operator: null
+          }
+        })
+      )
+    ).toBe(false)
+
+    // Nor is a move reception has not yet applied in CureMD.
+    expect(
+      canExportIcs(
+        appointment('2026-05-05T11:20', {
+          curemd: {
+            status: 'change-pending',
+            reference: 'CMD-1',
+            registered: {
+              startWall: '2026-05-05T11:20',
+              locationId: 'downtown',
+              serviceId: 'primary-care',
+              patientName: 'Sam Rivera'
+            },
+            declaredAtWall: '2026-01-02T11:00',
+            operator: 'Demo Reception'
+          },
+          pendingChange: {
+            startWall: '2026-05-06T09:00',
+            locationId: 'downtown',
+            requestedAtWall: '2026-05-01T09:00',
+            source: 'reception',
+            offerId: null
+          }
+        })
+      )
+    ).toBe(false)
   })
 
   it('escapes newlines and folds long lines to the iCalendar limit', () => {

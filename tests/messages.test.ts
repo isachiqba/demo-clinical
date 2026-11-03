@@ -21,7 +21,7 @@ const sampleParams = {
   zone: 'America/New_York',
   name: 'Example Name',
   when: 'Monday, 9:00 AM',
-  service: 'Primary care',
+  service: 'Internal medicine',
   location: 'Downtown',
   provider: 'Example Name',
   clinics: 'Downtown · Northside',

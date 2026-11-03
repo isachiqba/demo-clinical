@@ -3,21 +3,23 @@ import type { Service, ServiceId } from '@/types'
 /**
  * Four consultation types. Descriptions say what an appointment *is*, never what a
  * patient should do about a symptom — this is a demo, not medical advice.
+ *
+ * They deliberately carry no duration: every request takes one ten-minute slot on the
+ * booking grid, and how long the clinician actually spends is the clinic's business.
  */
 export const services: Service[] = [
   {
     id: 'primary-care',
     icon: 'stethoscope',
-    name: { en: 'Primary care', es: 'Medicina general' },
+    name: { en: 'Internal medicine', es: 'Medicina interna' },
     summary: {
-      en: 'Day-to-day care with a clinician who keeps your history.',
-      es: 'Atención cotidiana con un profesional que conoce tu historial.'
+      en: 'Day-to-day care, with your history kept from one visit to the next.',
+      es: 'Atención cotidiana, con tu historial conservado de una visita a la siguiente.'
     },
     detail: {
       en: 'A general appointment for everyday health questions, ongoing conditions and medication reviews.',
       es: 'Una consulta general para cuestiones de salud cotidianas, afecciones de seguimiento y revisión de medicación.'
     },
-    durationMinutes: 30
   },
   {
     id: 'annual-wellness',
@@ -31,7 +33,6 @@ export const services: Service[] = [
       en: 'A scheduled yearly visit with time to go through your history, current treatments and anything you want to raise.',
       es: 'Una visita anual programada con tiempo para repasar tu historial, los tratamientos actuales y lo que quieras plantear.'
     },
-    durationMinutes: 45
   },
   {
     id: 'follow-up',
@@ -42,10 +43,9 @@ export const services: Service[] = [
       es: 'Una consulta más corta para continuar algo ya hablado.'
     },
     detail: {
-      en: 'For picking up where a previous appointment left off, including reviewing results or adjusting a plan already agreed with your clinician.',
-      es: 'Para retomar una consulta anterior: revisar resultados o ajustar un plan ya acordado con tu profesional.'
+      en: 'For picking up where a previous appointment left off, including reviewing results or adjusting a plan already agreed.',
+      es: 'Para retomar una consulta anterior: revisar resultados o ajustar un plan ya acordado.'
     },
-    durationMinutes: 20
   },
   {
     id: 'non-emergency',
@@ -56,10 +56,9 @@ export const services: Service[] = [
       es: 'Una consulta breve para algo que puede esperar a una cita programada.'
     },
     detail: {
-      en: 'A general-purpose appointment when you would like to speak to a clinician and the matter is not urgent.',
-      es: 'Una consulta general para hablar con un profesional cuando el asunto no es urgente.'
+      en: 'A general-purpose appointment when you would like to be seen and the matter is not urgent.',
+      es: 'Una consulta general para cuando quieras que te vean y el asunto no es urgente.'
     },
-    durationMinutes: 20
   }
 ]
 
